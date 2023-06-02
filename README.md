@@ -1,6 +1,4 @@
-# Batalha-Naval-Minado-Prolog
-
-# Batalha Naval Minado :bomb:⚓
+# Batalha-Naval-Minado-Prolog ⚓
 
 <p> Batalha Naval Minado é um jogo de estratégia onde o jogador deve encontrar e destruir todos os navios do oponente enquanto tenta evitar as minas escondidas no tabuleiro.
 
