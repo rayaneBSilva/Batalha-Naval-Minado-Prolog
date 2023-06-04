@@ -4,14 +4,16 @@
 % Função que exibe o conteúdo de um arquivo
 exibirConteudoArquivo(NomeArquivo) :-
     open(NomeArquivo, read, Stream),
-    repeat,
-    read_line_to_string(Stream, Conteudo),
-    (   Conteudo \= end_of_file
-    ->  format('~s~n', [Conteudo]),
-        fail
-    ;   true
-    ),
+    exibirConteudoArquivoAux(Stream),
     close(Stream).
+
+exibirConteudoArquivoAux(Stream) :-
+    read_line_to_string(Stream, Linha),
+    (   Linha \= end_of_file
+    ->  writeln(Linha),
+        exibirConteudoArquivoAux(Stream)
+    ;   true
+    ).
 
 % Função que exibe o menu principal
 exibirMenu :-
@@ -82,28 +84,45 @@ jogarComDoisJogadores :-
 % Função para redimensionar o tabuleiro
 redimensionarTabuleiro(Tamanho) :-
     write("Qual o novo tamanho do tabuleiro? (Digite somente um valor, ex: 10): "),
-    read(Tamanho),
-    (   integer(Tamanho),
-        Tamanho > 0
-    ->  write("Redimensionamento feito.")
+    read(NovoTamanho),
+    (   integer(NovoTamanho),
+        NovoTamanho > 0
+    ->  (
+            write("Redimensionando tabuleiro..."),
+            nl,
+            sleep(2),
+            atualizarTabuleiro(NovoTamanho),
+            write("Tabuleiro redimensionado com sucesso!"),
+            nl,
+            sleep(2),
+            nl,
+            menu
+        )
     ;   write("Tamanho inválido! Por favor, digite um número inteiro positivo."), nl,
         redimensionarTabuleiro(Tamanho)
     ).
 
+
+
+
 % Função para atualizar o tamanho do tabuleiro
 atualizarTabuleiro(Tamanho) :-
-    retract(tabuleiro(_)),
-    assert(tabuleiro(Tamanho)),
-    write("Tabuleiro redimensionado com sucesso!").
+    (   retract(tabuleiro(_))
+    ->  true
+    ;   true
+    ),
+    assert(tabuleiro(Tamanho)).
 
 % Função principal
 main :-
     exibirConteudoArquivo('introducao.txt'),
-    sleep(3),
+    sleep(2),
     menu.
 
 % Função que exibe o menu e lê a opção do usuário
 menu :-
     exibirMenu,
     lerOpcao(Opcao),
-    executarOpcao(Opcao).
+    executarOpcao(Opcao),
+    !. % Corte para evitar execução de outras cláusulas em menu/0
+
