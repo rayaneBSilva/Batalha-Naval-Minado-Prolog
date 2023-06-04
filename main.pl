@@ -29,22 +29,29 @@ lerOpcao(Opcao) :-
     write("→ Opção: "),
     read(Opcao).
 
-% Função para manipular a opção escolhida pelo usuário
-executarOpcao(Opcao) :-
-    (   Opcao =:= 0
-    ->  write('\nA água esquece o nome dos afogados...'), nl
-    ;   Opcao =:= 1
-    ->  cadastrarJogador, menu
-    ;   Opcao =:= 2
-    ->  prepararJogo
-    ;   Opcao =:= 4
-    ->  exibirConteudoArquivo('historia.txt'),
-        write("Pressione qualquer tecla para voltar ao menu"),
-        read(_),
-        menu
-    ;   write("Opção inválida!")
-    ).
 
+% Função para manipular a opção escolhida pelo usuário
+executarOpcao(0) :-
+    write('\nA água esquece o nome dos afogados...'), nl,
+    encerrar.
+executarOpcao(1) :-
+    cadastrarJogador, menu.
+executarOpcao(2) :-
+    prepararJogo.
+executarOpcao(4) :-
+    exibirConteudoArquivo('historia.txt'),
+    write("Pressione qualquer tecla para voltar ao menu"),
+    read(_),
+    menu.
+executarOpcao(_) :-
+    write("Opção inválida!").
+
+% Função para cadastrar um jogador
+cadastrarJogador :-
+    write("Digite o nome do jogador: "),
+    read(Nome),
+    assert(jogador(Nome)),
+    write("Jogador cadastrado com sucesso!").
 % Função para cadastrar um jogador
 cadastrarJogador :-
     write("Digite o nome do jogador: "),
@@ -60,17 +67,13 @@ prepararJogo :-
     write('\n ● Digite 3 para redimensionar o tabuleiro'), nl,
     write('\n ● Digite 0 para voltar ao menu\n'),
     lerOpcao(Opcao),
-    (   Opcao =:= 0
-    ->  true
-    ;   Opcao =:= 1
-    ->  jogarComMaquina
-    ;   Opcao =:= 2
-    ->  jogarComDoisJogadores
-    ;   Opcao =:= 3
-    ->  redimensionarTabuleiro(Tamanho), % Obtém o tamanho do tabuleiro
-        atualizarTabuleiro(Tamanho)
-    ;   write("Opção inválida!")
+    (   executarOpcao(Opcao),
+        encerrar
+    ;   menu
     ).
+
+% Função para encerrar o programa
+encerrar :- halt.
 
 % Função para jogar com a máquina
 jogarComMaquina :-
