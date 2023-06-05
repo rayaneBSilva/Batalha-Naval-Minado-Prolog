@@ -2,10 +2,10 @@
 :- dynamic jogador/2. % dynamic para permitir a modificação em tempo de execução
 :- dynamic tabuleiro/1.
 
-:- use_module(library(pio)).
-:- use_module(library(dcgs)).
-:- use_module(library(lists)).
-:- set_prolog_flag(double_quotes, codes).
+% :- use_module(library(pio)).
+% :- use_module(library(dcgs)).
+% :- use_module(library(lists)).
+% :- set_prolog_flag(double_quotes, codes).
 
 % função que inicia o programa
 main :-
@@ -96,7 +96,7 @@ executarOpcaoJogo(Dados, 0, _) :-
     prepararJogo(Dados, TamTab).
 
 executarOpcaoJogo(Dados, 1, TamTab) :-
-    doWhile(true, Dados, TamTab).
+   doWhile(true, Dados, TamTab).
 
 executarOpcaoJogo(Dados, 2, TamTab) :-
     prepararJogo(Dados, TamTab).
@@ -123,7 +123,6 @@ executarOpcaoJogo(Dados, Opcao, TamTab) :-
 doWhile(true, Dados, TamTab):-
     shell(clear),
     montaTabuleiros(Tabuleiro_Jogador, Tabuleiro_Jogador_Ve_Bot, Tabuleiro_Bot, Tabuleiro_Bot_Ve_Jogador, TamTab),
-    
     preparaTabParaPrint(Tabuleiro_Bot, 0, Tab_R),
 	  write(Tab_R).   
 
@@ -381,4 +380,3 @@ insereEspacos([T0 | T1], K, R):-
 	string_concat(K, " ", R1),
 	string_concat(R1, T0, R2),
 	insereEspacos(T1, R2, R).
-
