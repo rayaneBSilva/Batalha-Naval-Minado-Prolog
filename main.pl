@@ -67,7 +67,6 @@ prepararJogo(Dados, TamTab) :-
     writeln('\n ● Digite 2 para jogar com dois jogadores'),
     writeln('\n ● Digite 3 para redimensionar o tabuleiro'),
     writeln('\n ● Digite 0 para voltar ao menu\n\n'),
-    writeln(TamTab),
     ler_opcao(Op),
     executarOpcaoJogo(Dados, Op, TamTab).
 
@@ -103,15 +102,15 @@ doWhile(true, Dados, TamTab):-
     shell(clear),
     montaTabuleiros(Tabuleiro_Jogador, Tabuleiro_Jogador_Ve_Bot, Tabuleiro_Bot, Tabuleiro_Bot_Ve_Jogador, TamTab),
     
-    preparaTabParaPrint(Tabuleiro_Jogador, 0, Tab_R),
-	write(Tab_R).   
+    preparaTabParaPrint(Tabuleiro_Bot, 0, Tab_R),
+	  write(Tab_R).   
 
 
 doWhile(false, Dados, TamTab):- menu(Dados).
 
 % Relação que monta os tabuleiros
 montaTabuleiros(Tabuleiro_Jogador, Tabuleiro_Jogador_Ve_Bot, Tabuleiro_Bot, Tabuleiro_Bot_Ve_Jogador, TamTab) :- 
-    montaTabuleiro("", Tabuleiro_Jogador, TamTab),
+  montaTabuleiro("", Tabuleiro_Jogador, TamTab),
 	montaTabuleiro("", Tabuleiro_Jogador_Ve_Bot, TamTab),
 	montaTabuleiro("B", Tabuleiro_Bot, TamTab),
 	montaTabuleiro("", Tabuleiro_Bot_Ve_Jogador, TamTab).
@@ -121,8 +120,8 @@ montaTabuleiro("", Tabuleiro_Jogador, TamTab):-
 
 montaTabuleiro("B", Tabuleiro_Bot, TamTab):-
 	montaMatriz(_, 0, Tab, TamTab),
-    Quantidade_de_navios is TamTab / 2.
-   % montaTabuleiroBotInteiro(Tab, Tabuleiro_Bot, Quantidade_de_navios, TamTab). 
+    Quantidade_de_navios is (TamTab / 2),
+    montaTabuleiroBotInteiro(Tab, Tabuleiro_Bot, Quantidade_de_navios, TamTab). 
 
 montaMatriz(R, TamTab, R, TamTab).
 montaMatriz(LinhaEntrada, I, R, TamTab):-
@@ -154,11 +153,12 @@ montaTabuleiroBot(Tab, TamNavio, R, TamTab):-
 	random(1, TamTabAux, X),
 	random(1, TamTabAux, Y),
 	random(0, 2, Orient_I),
-
+    
 	verificaSeCabeNavio(Tab, X, Y, TamNavio, TamTab, Orient_I, Resultado),
 
-	R1 == true -> (
-		verificaEPosicionaNavioBot(Tab, X, Y, TamNavio, Orient_I, R), % Falta fazer essa função, tem que pensar se vai precisar do tamanho do  navio para ela
+    
+	Resultado -> (
+		posicionaNavios(Tab, X, Y, TamNavio, TamTab, Orient_I, R) % Falta fazer essa função, tem que pensar se vai precisar do tamanho do  navio para ela
 	);
 	montaTabuleiroBot(Tab, TamNavio, R, TamTab).
 
@@ -215,6 +215,107 @@ transpose(Tab, [Linha|Linha2]) :- transpose_coluna(Tab, Linha, TabResul),
                                  transpose(TabResul, Linha2).
 transpose_coluna([], [], []).
 transpose_coluna([[H|T]|Linha2], [H|Hs], [T|Ts]) :- transpose_coluna(Linha2, Hs, Ts).
+
+% Função que ira posicionar os navios na horizontal
+posicionaNavios(Tab, X, Y, TamNavio, TamTab, 0, R):- posicionaNaviosHorizontal(Tab, X, Y, TamNavio, TamTab, R).
+
+% Função que ira posicionar os navios na vertical
+posicionaNavios(Tab, X, Y, TamNavio, TamTab, 1, R):- posicionaNaviosVertical(Tab, X, Y, TamNavio, TamTab, R).
+
+
+posicionaNaviosVertical(Tab, X, Y, TamNavio, TamTab, Resultado):-
+	transpose(Tab, TabTransp),
+	posicionaNaviosHorizontal(TabTransp, Y, X, TamNavio, TamTab, TabResul),
+	transpose(TabResul, Resultado).
+
+% Comecei, aqui, caso dê erro, apenas pra me localizar
+posicionaNaviosHorizontal(TabTransp, X, Y, TamNavio, TamTab, Resultado):- 
+  LinhaInserir is X - 1,
+  PosInserir is Y - 1,
+  nth0(LinhaInserir, TabTransp, Linha),
+  drop(PosInserir, Linha, LinhaDrop),
+  take(TamNavio, LinhaDrop, LinhaDropTake),
+  temNavio(LinhaDropTake, TabResul),
+  negateBool(TabResul, NotTabResul),
+  (NotTabResul -> adicionandoNavioHorizontal(TabTransp, TamNavio, TamTab, LinhaInserir, PosInserir, Resultado);
+  Resultado = []).
+  
+  
+  
+  
+% Função equivalente a remonta navios, LEMBRAR DE APAGAR ESSE COMENTÁRIO EDUARDA !!!
+adicionandoNavioHorizontal([Head|[]], TamNavio, TamTab, 0, Posicao_Y, Resultado):- 
+	LimiteMin = Posicao_Y,
+	LimiteMax is Posicao_Y + TamNavio - 1, 
+	montaListaComNavio(Head, 0, TamTab, LimiteMin, LimiteMax, [], Resultado). % montaListaComNavio(Head, 0, TamTab, LimiteMin, LimiteMax, [], true, Resultado).
+
+adicionandoNavioHorizontal([H|T], TamNavio, TamTab, 0, Posicao_Y, Resultado):-
+	LimiteMin = Posicao_Y,
+	LimiteMax is Posicao_Y + TamNavio - 1, 
+	montaListaComNavio(H, 0, TamTab, LimiteMin, LimiteMax, [], R),                   
+	adicionandoNavioHorizontal(T, TamNavio, TamTab, -1, Posicao_Y, R2),
+	append([R], R2, Resultado).
+
+adicionandoNavioHorizontal([H|[]], _, _, _, _, [H]). 
+
+adicionandoNavioHorizontal([H|T], TamNavio, TamTab, Posicao_X, Posicao_Y, Resultado):-
+  Pos_X_Aux is Posicao_X - 1,
+	adicionandoNavioHorizontal(T, TamNavio, TamTab, Pos_X_Aux, Posicao_Y, Resul),
+	append([H], Resul, Resultado).
+
+
+montaListaComNavio(_, TamTab, TamTab, _, _, NovaLista, NovaLista).
+montaListaComNavio(Lista, I, TamTab, LimiteMin, LimiteMax, LSaida, R):-
+	I >= 0,
+	I < TamTab,
+	((I < LimiteMin); (I > LimiteMax)) ->
+		(nth0(I, Lista, Elemento),
+		I_Aux is I + 1,
+		append(LSaida, [Elemento], NovoLSaida),
+		montaListaComNavio(Lista, I_Aux, TamTab, LimiteMin, LimiteMax, NovoLSaida, R));
+		(Elemento = #,
+		I_Aux is I + 1,
+		append(LSaida, [Elemento], NovoLSaida),
+		montaListaComNavio(Lista, I_Aux, TamTab, LimiteMin, LimiteMax, NovoLSaida, R)).
+
+
+
+
+
+
+% ACHO QUE ESSA FUNÇÃO NAO PRECISA, TESTAR CODIGO SEM ELA 
+% montaListaComNavio(_, TamTab, TamTab, _, _, NovaLista, true, [NovaLista]).
+% montaListaComNavio(Lista, I, TamTab, LimiteMin, LimiteMax, LSaida, true, R):-
+%	I >= 0,
+%	I < TamTab,
+%	((I < LimiteMin); (I > LimiteMax)) ->
+%		(nth0(I, Lista, Elemento),
+%		I_Aux is I + 1,
+%		append(LSaida, [Elemento], NovoLSaida),
+%		montaLista(Lista, I_Aux, LimiteMin, LimiteMax, NovoLSaida, true, R));
+%		(Elemento = '#',
+%		I_Aux is I + 1,
+%		append(LSaida, [Elemento], NovoLSaida),
+%		montaLista(Lista, I_Aux, LimiteMin, LimiteMax, NovoLSaida, true, R)).
+
+
+
+
+
+
+
+
+
+ % Negação do Bool
+negateBool(false, true).
+negateBool(true, false).
+
+
+
+
+
+
+
 
 
 
