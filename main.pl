@@ -65,6 +65,47 @@ executarOpcao(Dados, 4) :-
     read(_),
     menu(Dados).
 
+
+% ---------- CADASTRA JOGADOR ----------
+
+cadastrarJogador(Dados, NovosDados) :-
+    shell(clear), % limpa a tela
+    writeln('                  Cadastro de jogadores                  '),
+    writeln('\nDigite um nome de usuário: '),
+    read(Nome),
+    (   existeJogador(Dados, Nome)
+    ->  writeln('\nEsse nome já existe, escolha outro.'),
+        % writeln('\nPressione <Enter> para continuar...'),
+        get_char(_),
+        sleep(3), % Pausa por 3 segundos
+        cadastrarJogador(Dados, NovosDados)
+    ;   append(Dados, [jogador(Nome, 0)], NovosDados), % Atualiza a lista de jogadores
+        open('dados.txt', write, Stream), % Abre o arquivo para escrita
+        salvarJogadores(Stream, NovosDados), % Salva a lista de jogadores no arquivo
+        close(Stream),
+        format('\nUsuário ~s cadastrado com sucesso!', [Nome]),
+        flush_output,
+        sleep(3), % Pausa por 3 segundos
+        writeln('\nPressione <Enter> para continuar...'),
+        get_char(_),
+        menu(NovosDados)
+    ).
+
+% Função auxiliar para verificar se um jogador já existe
+existeJogador([], _) :- false.
+existeJogador([jogador(Nome, _) | _], Nome) :- true.
+existeJogador([_ | Jogadores], Nome) :-
+    existeJogador(Jogadores, Nome).
+
+% Função auxiliar para salvar a lista de jogadores no arquivo
+salvarJogadores(_, []).
+salvarJogadores(Stream, [jogador(Nome, Pontuacao) | Jogadores]) :-
+    format(Stream, 'jogador(~w, ~w).\n', [Nome, Pontuacao]),
+    salvarJogadores(Stream, Jogadores).
+
+% ---------- FIM ----------
+
+
 exibirConteudoArquivoLentamente(NomeArquivo) :-
     phrase_from_file(conteudoArquivo(T), NomeArquivo),
     imprimirLentamente(T).
