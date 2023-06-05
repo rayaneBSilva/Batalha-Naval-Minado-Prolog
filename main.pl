@@ -157,32 +157,40 @@ pegaTamanhoTabuleiro(_, 10).
 
 executarOpcaoJogo(Dados, Opcao, TamTab) :-
     Opcao \= 3,
-    writeln("Opção inválida... Pressione ENTER para tentar novamente!\n"),
+    writeln('Opção inválida... Pressione ENTER para tentar novamente!\n'),
     read(_),
     menu(Dados, TamTab).
 
 doWhile(true, Dados, TamTab):-
     shell(clear),
     montaTabuleiros(Tabuleiro_Jogador, Tabuleiro_Jogador_Ve_Bot, Tabuleiro_Bot, Tabuleiro_Bot_Ve_Jogador, TamTab),
-    preparaTabParaPrint(Tabuleiro_Bot, 0, Tab_R),
-	  write(Tab_R).   
+    montaTabuleiroJogador(Tabuleiro_Jogador, TamTab, Tabuleiro_Jogador_Final),
+    
+    shell(clear),
+    writeln('Tabuleiro do Jogador: '),
+    preparaTabParaPrint(Tabuleiro_Jogador_Ve_Bot, 0, Tab_R),
+	  write(Tab_R),
+    writeln('Tabuleiro do Bot: '),
+    preparaTabParaPrint(Tabuleiro_Bot_Ve_Jogador,0, Tab_bot_R),
+    write(Tab_bot_R).
+   
 
 
 doWhile(false, Dados, TamTab):- menu(Dados).
 
 % Relação que monta os tabuleiros
 montaTabuleiros(Tabuleiro_Jogador, Tabuleiro_Jogador_Ve_Bot, Tabuleiro_Bot, Tabuleiro_Bot_Ve_Jogador, TamTab) :- 
-  montaTabuleiro("", Tabuleiro_Jogador, TamTab),
-	montaTabuleiro("", Tabuleiro_Jogador_Ve_Bot, TamTab),
-	montaTabuleiro("B", Tabuleiro_Bot, TamTab),
-	montaTabuleiro("", Tabuleiro_Bot_Ve_Jogador, TamTab).
+  montaTabuleiro('', Tabuleiro_Jogador, TamTab),
+	montaTabuleiro('', Tabuleiro_Jogador_Ve_Bot, TamTab),
+	montaTabuleiro('B', Tabuleiro_Bot, TamTab),
+	montaTabuleiro('', Tabuleiro_Bot_Ve_Jogador, TamTab).
 
-montaTabuleiro("", Tabuleiro_Jogador, TamTab):-
+montaTabuleiro('', Tabuleiro_Jogador, TamTab):-
 	montaMatriz(_, 0, Tabuleiro_Jogador, TamTab).
 
-montaTabuleiro("B", Tabuleiro_Bot, TamTab):-
+montaTabuleiro('B', Tabuleiro_Bot, TamTab):-
 	montaMatriz(_, 0, Tab, TamTab),
-    Quantidade_de_navios is (TamTab / 2),
+    Quantidade_de_navios is (TamTab // 2),
     montaTabuleiroBotInteiro(Tab, Tabuleiro_Bot, Quantidade_de_navios, TamTab). 
 
 montaMatriz(R, TamTab, R, TamTab).
@@ -341,6 +349,92 @@ montaListaComNavio(Lista, I, TamTab, LimiteMin, LimiteMax, LSaida, R):-
 		montaListaComNavio(Lista, I_Aux, TamTab, LimiteMin, LimiteMax, NovoLSaida, R)).
 
 
+montaTabuleiroJogador(Tab, TamTab, TabResul):-
+    TamNavios is (TamTab // 2),
+    posicionaNaviosTabJogador(Tab, TamNavios, TamTab, TabResul).
+
+
+posicionaNaviosTabJogador(Tab, 2, TamTab, TabResul) :- posicionaNaviosJogador(Tab, 2, TamTab, TabResul).
+posicionaNaviosTabJogador(Tab, TamNavio, TamTab, TabResul):-
+    TamNavio > 1,
+    TamNaviosAux is TamNavio - 1,
+    posicionaNaviosJogador(Tab, TamNavio, TamTab, TabR),
+    posicionaNaviosTabJogador(TabR, TamNaviosAux, TamTab, TabResul).
+
+
+posicionaNaviosJogador(Tab, TamNavio, TamTab, TabResultado):-
+  shell(clear),
+  write('Seu tabuleiro\n'),
+	preparaTabParaPrint(Tab, 0, Tab_R),
+	write(Tab_R),
+ 
+  write('Insira as posicoes X de 1 a '), write(TamTab), write(' e Y de 1 a '), write(TamTab), write(' e a ORIENTACAO (H ou V) para posicionar seu navio.\n'),
+	write('Tamanho do navio: '), write(TamNavio),
+
+	write('\nValor de X: '),
+  read(X),
+	write('\nValor de Y: '),
+	read(Y),
+  write('\nOrientação: '),
+  read_string(user_input, ".", "\n", _, Ori),
+
+
+	verificaEntrada(X, TamTab, R1),
+	verificaEntrada(Y, TamTab, R2),
+	verificaOrientacao(Ori, R3),
+	verificaLimites(Tab, Ori, X, Y, TamNavio, TamTab, RLimite),
+
+	((R1, R2, R3, RLimite) -> (insereNavioTab(Tab, X, Y, Ori, TamNavio, TamTab, TabResultado));
+	           write('\nInformacoes invalidas, tente novamente.\n'),
+	           sleep(3),
+	           posicionaNaviosJogador(Tab, TamNavio, TamTab, TabResultado)).
+
+
+verificaEntrada(X, TamTab, R):-
+	(X < 1; X > TamTab) -> (
+		write('O valor eh invalido, insira um valor entre 1 e '), write(TamTab), write('\n'),
+		sleep(2.5),
+		R = false, !
+	); R = true.
+
+verificaOrientacao("H", true):- !.
+verificaOrientacao("V", true):- !.
+verificaOrientacao(_, false):- 
+  write('O valor digitado é invalido\n'),
+	sleep(2.5).
+
+
+verificaLimites(Tab, "H", X, Y, TamNavio, TamTab, R):-
+	K is Y + TamNavio - 1,
+	(K =< TamTab) -> (
+		verificaTemNavioHorizontal(Tab, X, Y, TamNavio, R), !
+	);
+	R = false.
+
+verificaLimites(Tab, "V", X, Y, TamNavio, TamTab, R):-
+	K is X + TamNavio - 1,
+	(K =< TamTab) -> (
+		verificaTemNavioVertical(Tab, X, Y, TamNavio, R), !
+	);
+	R = false.
+ 
+ verificaLimites(_, _, _, _, _, _, false).
+
+
+insereNavioTab(Tab, X, Y, Orientacao, TamNavio, TamTab, R):-
+	posicionaFinal(Tab, X, Y, Orientacao, TamNavio, TamTab, R).
+
+posicionaFinal(Tab, X, Y, "H", TamNavio, TamTab, R):-
+	posicionaNaviosHorizontal(Tab, X, Y, TamNavio, TamTab, R).
+
+posicionaFinal(Tab, X, Y, "V", TamNavio, TamTab, R):-
+	posicionaNaviosVertical(Tab, X, Y, TamNavio, TamTab, R).
+
+
+
+
+
+
 
 
 
@@ -367,7 +461,7 @@ montaListaComNavio(Lista, I, TamTab, LimiteMin, LimiteMax, LSaida, R):-
 
 
 
-
+ 
  % Negação do Bool
 negateBool(false, true).
 negateBool(true, false).
@@ -421,3 +515,10 @@ insereEspacos([T0 | T1], K, R):-
 	string_concat(K, " ", R1),
 	string_concat(R1, T0, R2),
 	insereEspacos(T1, R2, R).
+
+
+
+printaTabEMensagem(Tab, Mensagem):-
+	write(Mensagem),
+	preparaTabParaPrint(Tab, 0, Tab_R),
+	write(Tab_R).
