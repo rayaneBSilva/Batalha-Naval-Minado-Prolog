@@ -2,10 +2,15 @@
 :- dynamic jogador/2. % dynamic para permitir a modificação em tempo de execução
 :- dynamic tabuleiro/1.
 
+:- use_module(library(pio)).
+:- use_module(library(dcgs)).
+:- use_module(library(lists)).
+:- set_prolog_flag(double_quotes, codes).
+
 % função que inicia o programa
 main :-
     exibirConteudoArquivo('introducao.txt'),
-    sleep(3), % aguarda 5 segundos
+    sleep(1), % aguarda 5 segundos
     menu([]).
 
 % ---------- INTRODUÇÃO E HISTÓRIA ----------
@@ -39,9 +44,9 @@ menu(Dados) :-
     executarOpcao(Dados, Op).
 
 ler_opcao(Op):-
-    writeln("→ Opção:"),
+    write('→ Opção:'),nl,
     read(Op).
-
+    
 % função para manipular a opção escolhida pelo usuário
 executarOpcao(Dados, 0) :-
     writeln('\nA água esquece o nome dos afogados...'),
@@ -55,11 +60,28 @@ executarOpcao(Dados, 2) :-
     prepararJogo(Dados, 10).
 
 executarOpcao(Dados, 4) :-
-    exibirConteudoArquivo('historia.txt'),
-    writeln("Pressione qualquer numero para voltar ao menu"),
+    exibirConteudoArquivoLentamente('historia.txt'),
+    writeln("Pressione qualquer número para voltar ao menu."),
     read(_),
     menu(Dados).
 
+exibirConteudoArquivoLentamente(NomeArquivo) :-
+    phrase_from_file(conteudoArquivo(T), NomeArquivo),
+    imprimirLentamente(T).
+
+conteudoArquivo([]) --> [].
+conteudoArquivo([C|Cs]) -->
+    [C],
+    conteudoArquivo(Cs).
+
+imprimirLentamente([]).
+imprimirLentamente([C|Cs]) :-
+    put_char(C),
+    sleep(0.1),  % Tempo de espera entre as letras (ajuste conforme necessário)
+    flush_output,
+    imprimirLentamente(Cs).
+
+    
 prepararJogo(Dados, TamTab) :-
     shell(clear), % limpa a tela
     writeln('-------------------- Batalha Naval --------------------'),
@@ -258,3 +280,4 @@ insereEspacos([T0 | T1], K, R):-
 	string_concat(K, " ", R1),
 	string_concat(R1, T0, R2),
 	insereEspacos(T1, R2, R).
+
