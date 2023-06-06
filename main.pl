@@ -2,11 +2,6 @@
 :- dynamic jogador/2. % dynamic para permitir a modificação em tempo de execução
 :- dynamic tabuleiro/1.
 
-% :- use_module(library(pio)).
-% :- use_module(library(dcgs)).
-% :- use_module(library(lists)).
-% :- set_prolog_flag(double_quotes, codes).
-
 % função que inicia o programa
 main :-
     exibirConteudoArquivo('introducao.txt'),
@@ -134,7 +129,8 @@ prepararJogo(Dados, TamTab) :-
     executarOpcaoJogo(Dados, Op, TamTab).
 
 executarOpcaoJogo(Dados, 0, _) :-
-    prepararJogo(Dados, TamTab).
+    menu.
+    
 
 executarOpcaoJogo(Dados, 1, TamTab) :-
    doWhile(true, Dados, TamTab).
@@ -412,7 +408,7 @@ verificaLimites(Tab, "H", X, Y, TamNavio, TamTab, R):-
 	R = false.
 
 verificaLimites(Tab, "V", X, Y, TamNavio, TamTab, R):-
-	K is X + TamNavio - 1,
+	K is X + TamNavio + 1,
 	(K =< TamTab) -> (
 		verificaTemNavioVertical(Tab, X, Y, TamNavio, R), !
 	);
