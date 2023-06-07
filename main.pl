@@ -294,7 +294,7 @@ posicionaNaviosVertical(Tab, X, Y, TamNavio, TamTab, Resultado):-
 	posicionaNaviosHorizontal(TabTransp, Y, X, TamNavio, TamTab, TabResul),
 	transpose(TabResul, Resultado).
 
-% Comecei, aqui, caso dê erro, apenas pra me localizar
+
 posicionaNaviosHorizontal(TabTransp, X, Y, TamNavio, TamTab, Resultado):- 
   LinhaInserir is X - 1,
   PosInserir is Y - 1,
@@ -309,11 +309,11 @@ posicionaNaviosHorizontal(TabTransp, X, Y, TamNavio, TamTab, Resultado):-
   
   
   
-% Função equivalente a remonta navios, LEMBRAR DE APAGAR ESSE COMENTÁRIO EDUARDA !!!
+% Função equivalente a remonta navios
 adicionandoNavioHorizontal([Head|[]], TamNavio, TamTab, 0, Posicao_Y, Resultado):- 
 	LimiteMin = Posicao_Y,
 	LimiteMax is Posicao_Y + TamNavio - 1, 
-	montaListaComNavio(Head, 0, TamTab, LimiteMin, LimiteMax, [], Resultado). % montaListaComNavio(Head, 0, TamTab, LimiteMin, LimiteMax, [], true, Resultado).
+	montaListaComNavio(Head, 0, LimiteMin, LimiteMax, [], true, Resultado).% montaListaComNavio(Head, 0, TamTab, LimiteMin, LimiteMax, [], true, Resultado).
 
 adicionandoNavioHorizontal([H|T], TamNavio, TamTab, 0, Posicao_Y, Resultado):-
 	LimiteMin = Posicao_Y,
@@ -328,22 +328,6 @@ adicionandoNavioHorizontal([H|T], TamNavio, TamTab, Posicao_X, Posicao_Y, Result
   Pos_X_Aux is Posicao_X - 1,
 	adicionandoNavioHorizontal(T, TamNavio, TamTab, Pos_X_Aux, Posicao_Y, Resul),
 	append([H], Resul, Resultado).
-
-
-montaListaComNavio(_, TamTab, TamTab, _, _, NovaLista, NovaLista).
-montaListaComNavio(Lista, I, TamTab, LimiteMin, LimiteMax, LSaida, R):-
-	I >= 0,
-	I < TamTab,
-	((I < LimiteMin); (I > LimiteMax)) ->
-		(nth0(I, Lista, Elemento),
-		I_Aux is I + 1,
-		append(LSaida, [Elemento], NovoLSaida),
-		montaListaComNavio(Lista, I_Aux, TamTab, LimiteMin, LimiteMax, NovoLSaida, R));
-		(Elemento = #,
-		I_Aux is I + 1,
-		append(LSaida, [Elemento], NovoLSaida),
-		montaListaComNavio(Lista, I_Aux, TamTab, LimiteMin, LimiteMax, NovoLSaida, R)).
-
 
 montaTabuleiroJogador(Tab, TamTab, TabResul):-
     TamNavios is (TamTab // 2),
@@ -403,12 +387,12 @@ verificaOrientacao(_, false):-
 verificaLimites(Tab, "H", X, Y, TamNavio, TamTab, R):-
 	K is Y + TamNavio - 1,
 	(K =< TamTab) -> (
-		verificaTemNavioHorizontal(Tab, X, Y, TamNavio, R), !
+		verificaTemNavioHorizontal(Tab, X, Y, TamNavio, R), !     
 	);
 	R = false.
 
 verificaLimites(Tab, "V", X, Y, TamNavio, TamTab, R):-
-	K is X + TamNavio + 1,
+	K is X + TamNavio - 1,
 	(K =< TamTab) -> (
 		verificaTemNavioVertical(Tab, X, Y, TamNavio, R), !
 	);
@@ -428,57 +412,11 @@ posicionaFinal(Tab, X, Y, "V", TamNavio, TamTab, R):-
 
 
 
-
-
-
-
-
-
-
-% ACHO QUE ESSA FUNÇÃO NAO PRECISA, TESTAR CODIGO SEM ELA 
-% montaListaComNavio(_, TamTab, TamTab, _, _, NovaLista, true, [NovaLista]).
-% montaListaComNavio(Lista, I, TamTab, LimiteMin, LimiteMax, LSaida, true, R):-
-%	I >= 0,
-%	I < TamTab,
-%	((I < LimiteMin); (I > LimiteMax)) ->
-%		(nth0(I, Lista, Elemento),
-%		I_Aux is I + 1,
-%		append(LSaida, [Elemento], NovoLSaida),
-%		montaLista(Lista, I_Aux, LimiteMin, LimiteMax, NovoLSaida, true, R));
-%		(Elemento = '#',
-%		I_Aux is I + 1,
-%		append(LSaida, [Elemento], NovoLSaida),
-%		montaLista(Lista, I_Aux, LimiteMin, LimiteMax, NovoLSaida, true, R)).
-
-
-
-
-
-
-
-
- 
- % Negação do Bool
+% Negação do Bool
 negateBool(false, true).
 negateBool(true, false).
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-% Funções so pra ve o tabuleiro, não usem tem que mudar ainda
+% Funções so pra ve o tabuleiro
 preparaTabParaPrint([], _, "").
 preparaTabParaPrint([[]], _, "").
 preparaTabParaPrint(Tab, 0, R):-
@@ -513,8 +451,38 @@ insereEspacos([T0 | T1], K, R):-
 	insereEspacos(T1, R2, R).
 
 
-
 printaTabEMensagem(Tab, Mensagem):-
 	write(Mensagem),
 	preparaTabParaPrint(Tab, 0, Tab_R),
 	write(Tab_R).
+
+
+
+
+montaListaComNavio(_, 10, _, _, NovaLista, true, [NovaLista]).
+montaListaComNavio(LEntrada, I, MinI, MaxI, LSaida, true, R):-
+	I >= 0,
+	I < 10,
+	((I < MinI); (I > MaxI)) ->
+		(nth0(I, LEntrada, ElementoInteresse),
+		NovoI is I + 1,
+		append(LSaida, [ElementoInteresse], NovoLSaida),
+		montaListaComNavio(LEntrada, NovoI, MinI, MaxI, NovoLSaida, true, R));
+		(ElementoInteresse = #,
+		NovoI is I + 1,
+		append(LSaida, [ElementoInteresse], NovoLSaida),
+		montaListaComNavio(LEntrada, NovoI, MinI, MaxI, NovoLSaida, true, R)).
+
+montaListaComNavio(_, 10, _, _, NovaLista, NovaLista).
+montaListaComNavio(LEntrada, I, MinI, MaxI, LSaida, R):-
+	I >= 0,
+	I < 10,
+	((I < MinI); (I > MaxI)) ->
+		(nth0(I, LEntrada, ElementoInteresse),
+		NovoI is I + 1,
+		append(LSaida, [ElementoInteresse], NovoLSaida),
+		montaListaComNavio(LEntrada, NovoI, MinI, MaxI, NovoLSaida, R));
+		(ElementoInteresse = #,
+		NovoI is I + 1,
+		append(LSaida, [ElementoInteresse], NovoLSaida),
+		montaListaComNavio(LEntrada, NovoI, MinI, MaxI, NovoLSaida, R)).
