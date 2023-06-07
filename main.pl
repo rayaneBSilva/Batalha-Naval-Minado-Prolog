@@ -163,11 +163,11 @@ doWhile(true, Dados, TamTab):-
     montaTabuleiroJogador(Tabuleiro_Jogador, TamTab, Tabuleiro_Jogador_Final),
     
     shell(clear),
-    writeln('Tabuleiro do Jogador: '),
-    preparaTabParaPrint(Tabuleiro_Jogador_Ve_Bot, 0, Tab_R),
-	  write(Tab_R),
-    writeln('Tabuleiro do Bot: '),
-    preparaTabParaPrint(Tabuleiro_Bot_Ve_Jogador,0, Tab_bot_R),
+    writeln('Tabuleiro do Jogador: \n'),
+    preparaTabParaPrint(Tabuleiro_Jogador_Final, 0, TamTab, Tab_R),
+	write(Tab_R),
+    writeln('Tabuleiro do Bot: \n'),
+    preparaTabParaPrint(Tabuleiro_Bot,0, TamTab, Tab_bot_R),
     write(Tab_bot_R).
    
 
@@ -295,15 +295,15 @@ posicionaNaviosVertical(Tab, X, Y, TamNavio, TamTab, Resultado):-
 	transpose(TabResul, Resultado).
 
 
-posicionaNaviosHorizontal(TabTransp, X, Y, TamNavio, TamTab, Resultado):- 
-  LinhaInserir is X - 1,
-  PosInserir is Y - 1,
-  nth0(LinhaInserir, TabTransp, Linha),
-  drop(PosInserir, Linha, LinhaDrop),
+posicionaNaviosHorizontal(Tab, X, Y, TamNavio, TamTab, Resultado):- 
+  X2 is X - 1,
+  Y2 is Y - 1,
+  nth0(X2, Tab, Linha),
+  drop(Y2, Linha, LinhaDrop),
   take(TamNavio, LinhaDrop, LinhaDropTake),
   temNavio(LinhaDropTake, TabResul),
   negateBool(TabResul, NotTabResul),
-  (NotTabResul -> adicionandoNavioHorizontal(TabTransp, TamNavio, TamTab, LinhaInserir, PosInserir, Resultado);
+  (NotTabResul -> adicionandoNavioHorizontal(Tab, TamNavio, TamTab, X2, Y2, Resultado);
   Resultado = []).
   
   
@@ -313,7 +313,7 @@ posicionaNaviosHorizontal(TabTransp, X, Y, TamNavio, TamTab, Resultado):-
 adicionandoNavioHorizontal([Head|[]], TamNavio, TamTab, 0, Posicao_Y, Resultado):- 
 	LimiteMin = Posicao_Y,
 	LimiteMax is Posicao_Y + TamNavio - 1, 
-	montaListaComNavio(Head, 0, LimiteMin, LimiteMax, [], true, Resultado).% montaListaComNavio(Head, 0, TamTab, LimiteMin, LimiteMax, [], true, Resultado).
+	montaListaComNavio(Head, 0, TamTab, LimiteMin, LimiteMax, [], true, Resultado).% montaListaComNavio(Head, 0, TamTab, LimiteMin, LimiteMax, [], true, Resultado).
 
 adicionandoNavioHorizontal([H|T], TamNavio, TamTab, 0, Posicao_Y, Resultado):-
 	LimiteMin = Posicao_Y,
@@ -336,7 +336,7 @@ montaTabuleiroJogador(Tab, TamTab, TabResul):-
 
 posicionaNaviosTabJogador(Tab, 2, TamTab, TabResul) :- posicionaNaviosJogador(Tab, 2, TamTab, TabResul).
 posicionaNaviosTabJogador(Tab, TamNavio, TamTab, TabResul):-
-    TamNavio > 1,
+    TamNavio > 2,
     TamNaviosAux is TamNavio - 1,
     posicionaNaviosJogador(Tab, TamNavio, TamTab, TabR),
     posicionaNaviosTabJogador(TabR, TamNaviosAux, TamTab, TabResul).
@@ -344,17 +344,17 @@ posicionaNaviosTabJogador(Tab, TamNavio, TamTab, TabResul):-
 
 posicionaNaviosJogador(Tab, TamNavio, TamTab, TabResultado):-
   shell(clear),
-  write('Seu tabuleiro\n'),
-	preparaTabParaPrint(Tab, 0, Tab_R),
-	write(Tab_R),
+  writeln('          Seu tabuleiro\n'),
+  preparaTabParaPrint(Tab, 0, TamTab, Tab_R),
+  write(Tab_R),
  
   write('Insira as posicoes X de 1 a '), write(TamTab), write(' e Y de 1 a '), write(TamTab), write(' e a ORIENTACAO (H ou V) para posicionar seu navio.\n'),
-	write('Tamanho do navio: '), write(TamNavio),
+  write('Tamanho do navio: '), write(TamNavio),
 
-	write('\nValor de X: '),
+  write('\nValor de X: '),
   read(X),
-	write('\nValor de Y: '),
-	read(Y),
+  write('\nValor de Y: '),
+  read(Y),
   write('\nOrientação: '),
   read_string(user_input, ".", "\n", _, Ori),
 
@@ -401,40 +401,100 @@ verificaLimites(Tab, "V", X, Y, TamNavio, TamTab, R):-
  verificaLimites(_, _, _, _, _, _, false).
 
 
-insereNavioTab(Tab, X, Y, Orientacao, TamNavio, TamTab, R):-
-	posicionaFinal(Tab, X, Y, Orientacao, TamNavio, TamTab, R).
-
-posicionaFinal(Tab, X, Y, "H", TamNavio, TamTab, R):-
+insereNavioTab(Tab, X, Y, "H", TamNavio, TamTab, R):-
 	posicionaNaviosHorizontal(Tab, X, Y, TamNavio, TamTab, R).
 
-posicionaFinal(Tab, X, Y, "V", TamNavio, TamTab, R):-
+insereNavioTab(Tab, X, Y, "V", TamNavio, TamTab, R):-
 	posicionaNaviosVertical(Tab, X, Y, TamNavio, TamTab, R).
-
 
 
 % Negação do Bool
 negateBool(false, true).
 negateBool(true, false).
 
-% Funções so pra ve o tabuleiro
-preparaTabParaPrint([], _, "").
-preparaTabParaPrint([[]], _, "").
-preparaTabParaPrint(Tab, 0, R):-
-	preparaTabParaPrint(Tab, 1, R1),
-	string_concat("    1 2 3 4 5 6 7 8 9 10\n", R1, R).
-preparaTabParaPrint([H|_], 10, R):-
-	insereEspacos(H, "", K),
-	string_concat("10 ", K, R1),
-	string_concat(R1, "\n", R).
-preparaTabParaPrint([H|T], I, R):-
-	I < 10,
-	string_concat(" ", I, R1),
-	string_concat(R1, " ", R2),
-	insereEspacos(H, "", K),
+
+
+montaListaComNavio(_, TamTab, TamTab, _, _, NovaLista, true, [NovaLista]).
+montaListaComNavio(Lista, I, TamTab, MinI, MaxI, ListaResul, true, R):-
+	I >= 0,
+	I < TamTab,
+	((I < MinI); (I > MaxI)) ->
+		(nth0(I, Lista, Elemento),
+		NovoI is I + 1,
+		append(ListaResul, [Elemento], NovoLSaida),
+		montaListaComNavio(Lista, NovoI, TamTab, MinI, MaxI, NovoLSaida, true, R));
+		(Elemento = #,
+		NovoI is I + 1,
+		append(ListaResul, [Elemento], NovoLSaida),
+		montaListaComNavio(Lista, NovoI, TamTab, MinI, MaxI, NovoLSaida, true, R)).
+
+montaListaComNavio(_, TamTab, TamTab, _, _, NovaLista, NovaLista).
+montaListaComNavio(Lista, I, TamTab, MinI, MaxI, ListaResul, R):-
+	I >= 0,
+	I < TamTab,
+	((I < MinI); (I > MaxI)) ->
+		(nth0(I, Lista, Elemento),
+		NovoI is I + 1,
+		append(ListaResul, [Elemento], NovoLSaida),
+		montaListaComNavio(Lista, NovoI, TamTab, MinI, MaxI, NovoLSaida, R));
+		(Elemento = #,
+		NovoI is I + 1,
+		append(ListaResul, [Elemento], NovoLSaida),
+		montaListaComNavio(Lista, NovoI, TamTab, MinI, MaxI, NovoLSaida, R)).
+
+
+
+
+
+
+
+
+
+
+
+
+
+% Funções so pra ve o tabuleiro, não usem tem que mudar ainda
+preparaTabParaPrint([], _, _, "").
+
+preparaTabParaPrint([[]], _, _, "").
+
+preparaTabParaPrint(Tab, 0, TamTab, R):-
+	preparaTabParaPrint(Tab, 1, TamTab, R1),
+    criaStringDeNumero(TamTab, StrResul),
+    string_concat(StrResul, "\n", StrResul2),
+	string_concat(StrResul2, R1, R).
+
+preparaTabParaPrint([H|_], TamTab, TamTab, R):-
+	imprimiListaComEspaco(H, "", H2),
+	insereEspacos([H2], " ", K),
+    string_concat(TamTab, " ", R1),
+	string_concat(R1, K, R2),
+	string_concat(R2, "\n", R).
+
+
+preparaTabParaPrint([H|T], I, TamTab, R):-
+	I < TamTab, I >= 10, 
+	string_concat(I, " ", R2),
+    imprimiListaComEspaco(H, "", H2),
+	insereEspacos([H2], " ", K),
 	string_concat(R2, K, R3),
 	string_concat(R3, "\n", R4),
 	NovoI is I + 1,
-	preparaTabParaPrint(T, NovoI, R5),
+	preparaTabParaPrint(T, NovoI, TamTab, R5),
+	string_concat(R4, R5, R).
+
+
+preparaTabParaPrint([H|T], I, TamTab, R):-
+	I < TamTab, I < 10,
+	string_concat(" ", I, R1),
+	string_concat(R1, " ", R2),
+    imprimiListaComEspaco(H, "", H2),
+	insereEspacos([H2], " ", K),
+	string_concat(R2, K, R3),
+	string_concat(R3, "\n", R4),
+	NovoI is I + 1,
+	preparaTabParaPrint(T, NovoI, TamTab, R5),
 	string_concat(R4, R5, R).
 
 insereEspacos([L|[]], K, R):-
@@ -451,38 +511,30 @@ insereEspacos([T0 | T1], K, R):-
 	insereEspacos(T1, R2, R).
 
 
-printaTabEMensagem(Tab, Mensagem):-
-	write(Mensagem),
-	preparaTabParaPrint(Tab, 0, Tab_R),
-	write(Tab_R).
+criaStringDeNumero(TamTab, StrResul):-
+    montaString("     ", 1, TamTab, StrResul).
 
+montaString(StrInicial, TamTab, TamTab, StrResul):-
+    string_concat(TamTab, "   ", Str_Aux),
+    string_concat(StrInicial, Str_Aux, StrResul).
 
+montaString(StrInicial, Indice, TamTab, StrResul):-
+    Indice < TamTab, Indice < 10,
+    string_concat(Indice, "   ", Str_Aux),
+    string_concat(StrInicial, Str_Aux, R1),
+    NovoIndice is Indice + 1,
+    montaString(R1, NovoIndice, TamTab, StrResul).
 
+montaString(StrInicial, Indice, TamTab, StrResul):-
+    Indice < TamTab, Indice >= 10,
+    string_concat(Indice, "  ", Str_Aux),
+    string_concat(StrInicial, Str_Aux, R1),
+    NovoIndice is Indice + 1,
+    montaString(R1, NovoIndice, TamTab, StrResul).
 
-montaListaComNavio(_, 10, _, _, NovaLista, true, [NovaLista]).
-montaListaComNavio(LEntrada, I, MinI, MaxI, LSaida, true, R):-
-	I >= 0,
-	I < 10,
-	((I < MinI); (I > MaxI)) ->
-		(nth0(I, LEntrada, ElementoInteresse),
-		NovoI is I + 1,
-		append(LSaida, [ElementoInteresse], NovoLSaida),
-		montaListaComNavio(LEntrada, NovoI, MinI, MaxI, NovoLSaida, true, R));
-		(ElementoInteresse = #,
-		NovoI is I + 1,
-		append(LSaida, [ElementoInteresse], NovoLSaida),
-		montaListaComNavio(LEntrada, NovoI, MinI, MaxI, NovoLSaida, true, R)).
-
-montaListaComNavio(_, 10, _, _, NovaLista, NovaLista).
-montaListaComNavio(LEntrada, I, MinI, MaxI, LSaida, R):-
-	I >= 0,
-	I < 10,
-	((I < MinI); (I > MaxI)) ->
-		(nth0(I, LEntrada, ElementoInteresse),
-		NovoI is I + 1,
-		append(LSaida, [ElementoInteresse], NovoLSaida),
-		montaListaComNavio(LEntrada, NovoI, MinI, MaxI, NovoLSaida, R));
-		(ElementoInteresse = #,
-		NovoI is I + 1,
-		append(LSaida, [ElementoInteresse], NovoLSaida),
-		montaListaComNavio(LEntrada, NovoI, MinI, MaxI, NovoLSaida, R)).
+imprimiListaComEspaco([], R, R).
+imprimiListaComEspaco([H|T], StrInicio, R):-
+    string_concat(StrInicio, " ", R1),
+    string_concat(R1, H, R2),
+    string_concat(R2, "  ", StrAux),
+    imprimiListaComEspaco(T, StrAux, R).
