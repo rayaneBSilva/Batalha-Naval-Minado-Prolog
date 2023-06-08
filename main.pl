@@ -169,7 +169,40 @@ doWhile(true, Dados, TamTab):-
     writeln('Tabuleiro do Bot: \n'),
     preparaTabParaPrint(Tabuleiro_Bot,0, TamTab, Tab_bot_R),
     write(Tab_bot_R).
-   
+
+    
+% nao usem ainda estou testando, mas vou subir mesmo assim    
+% iniciaJogoComMaquina(TabJogador, TabJogo, TabBot, TabBotJogo, TamTabuleiro, NomeJogador, Dados, NovosDados) :-
+%    writeln("Tabuleiro de "),
+%    writeln(NomeJogador),
+%    writeln(":\n"),
+%     printaTabuleiro(TabJogo, TamTabuleiro),
+%     writeln("Tabuleiro do Bot:\n"),
+%     printaTabuleiro(TabBotJogo, TamTabuleiro),
+% 
+%    contaNavios(TabJogador, TamTabuleiro, NaviosJog),
+%    contaNavios(TabBot, TamTabuleiro, NaviosBot),
+% 
+%     writeln("Número de navios restantes do jogador: "),
+%     writeln(NaviosJog),
+%     writeln("Número de navios restantes do bot: "),
+%     writeln(NaviosBot),
+% 
+%     (NaviosJog =:= 0 ->
+%         writeln("Que pena você perdeu! Seus navios foram para o fundo do mar!"),
+%        NovosDados = Dados
+%    ; NaviosBot =:= 0 ->
+%        writeln("Você é um verdadeiro almirante! Parabéns pela vitória na batalha naval."),
+%        atualizaPontuacao(Dados, NomeJogador, NovosDados)
+%    ; disparaNoTabuleiroBot(TabBot, TabBotJogo, TabJogador, TabJogo, TamTabuleiro, NovoTabBot, % NovoTabBotJogo, NovoTabJogador, NovoTabJogo),
+%     disparaNoTabuleiroJogador(NovoTabJogador, NovoTabJogo, NovoTabBot, NovoTabBotJogo, TamTabuleiro, % NovoTabJogador2, NovoTabJogo2, NovoTabBot2, NovoTabBotJogo2),
+%      iniciaJogoComMaquina(NovoTabJogador2, NovoTabJogo2, NovoTabBot2, NovoTabBotJogo2, TamTabuleiro, % NomeJogador, Dados, NovosDados)
+%    ).
+
+% contaNavios(Tabuleiro, TamTabuleiro, Contagem) :-
+%    findall(Navio, (between(0, TamTabuleiro, X), between(0, TamTabuleiro, Y), % verificaTemNavioNaLinha(Tabuleiro, X, Y, 1, Navio)), Navios),
+%    length(Navios, Contagem).
+
 
 
 doWhile(false, Dados, TamTab):- menu(Dados).
