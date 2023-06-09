@@ -45,7 +45,7 @@ ler_opcao(Op):-
 % função para manipular a opção escolhida pelo usuário
 executarOpcao(Dados, 0) :-
     writeln('\nA água esquece o nome dos afogados...'),
-    true.
+    halt.
 
 executarOpcao(Dados, 1) :-
     cadastrarJogador(Dados, NovosDados),
@@ -73,40 +73,43 @@ cadastrarJogador(Dados, NovosDados) :-
         % writeln('\nPressione <Enter> para continuar...'),
         get_char(_),
         sleep(3), % Pausa por 3 segundos
-        menu(Dados) % Retorna ao menu principal sem modificar a lista de jogadores
+        cadastrarJogador(Dados, NovosDados) % Retorna ao menu de cadastro
     ;   append(Dados, [jogador(Nome, 0)], NovosDados), % Atualiza a lista de jogadores
-        salvarJogadores('dados.txt', NovosDados), 
+        salvarJogador('dados.txt', jogador(Nome, 0)),
         format('\nUsuário ~s cadastrado com sucesso!', [Nome]),
         flush_output,
         sleep(3), % Pausa por 3 segundos
         writeln('\nPressione <Enter> para continuar...'),
         get_char(_),
-        menu(NovosDados)
+        menu(NovosDados) % Retorna ao menu principal com a lista atualizada de jogadores
     ).
-
 
 existeJogador(Arquivo, Nome) :-
-    open(Arquivo, read, Stream), 
-    existeJogadorAux(Stream, Nome),  
-    close(Stream).
-    
-% Função auxiliar para verificar se um jogador já existe no arquivo
-existeJogadorAux(Stream, Nome) :-
-    \+ at_end_of_stream(Stream),             
-    read(Stream, jogador(NomeArquivo, _)),    
-    ( Nome = NomeArquivo,                    
-      ! ;
-      existeJogadorAux(Stream, Nome)       
+    (   exists_file(Arquivo)
+    ->  open(Arquivo, read, Stream),
+        existeJogadorAux(Stream, Nome),
+        close(Stream)
+    ;   criarArquivo(Arquivo), % Cria o arquivo se ele não existir
+        false % Arquivo não existe
     ).
 
+existeJogadorAux(Stream, Nome) :-
+    \+ at_end_of_stream(Stream),
+    read(Stream, jogador(NomeArquivo, _)),
+    ( Nome \= NomeArquivo ->
+      existeJogadorAux(Stream, Nome)
+    ; true
+    ).
 
-% Função auxiliar para salvar a lista de jogadores no arquivo
-salvarJogadores(_, []).
-salvarJogadores(Arquivo, [jogador(Nome, Pontuacao) | Jogadores]) :-
-    open(Arquivo, append, Stream), 
+salvarJogador(Arquivo, jogador(Nome, Pontuacao)) :-
+    open(Arquivo, append, Stream),
     format(Stream, 'jogador(~w, ~w).\n', [Nome, Pontuacao]),
-    close(Stream),
-    salvarJogadores(Arquivo, Jogadores).
+    close(Stream).
+
+criarArquivo(Arquivo) :-
+    open(Arquivo, write, Stream),
+    close(Stream).
+
 
 exibirConteudoArquivoLentamente(NomeArquivo) :-
     phrase_from_file(conteudoArquivo(T), NomeArquivo),
