@@ -75,7 +75,7 @@ cadastrarJogador(Dados, NovosDados) :-
         sleep(3), % Pausa por 3 segundos
         menu(Dados) % Retorna ao menu principal sem modificar a lista de jogadores
     ;   append(Dados, [jogador(Nome, 0)], NovosDados), % Atualiza a lista de jogadores
-        salvarJogadores('dados.txt', NovosDados), % Salva a lista de jogadores no arquivo
+        salvarJogadores('dados.txt', NovosDados), 
         format('\nUsuário ~s cadastrado com sucesso!', [Nome]),
         flush_output,
         sleep(3), % Pausa por 3 segundos
@@ -107,8 +107,6 @@ salvarJogadores(Arquivo, [jogador(Nome, Pontuacao) | Jogadores]) :-
     format(Stream, 'jogador(~w, ~w).\n', [Nome, Pontuacao]),
     close(Stream),
     salvarJogadores(Arquivo, Jogadores).
-
-
 
 exibirConteudoArquivoLentamente(NomeArquivo) :-
     phrase_from_file(conteudoArquivo(T), NomeArquivo),
