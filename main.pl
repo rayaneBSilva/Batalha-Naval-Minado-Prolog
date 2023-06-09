@@ -175,40 +175,204 @@ doWhile(true, Dados, TamTab):-
 	write(Tab_R),
     writeln('Tabuleiro do Bot: \n'),
     preparaTabParaPrint(Tabuleiro_Bot,0, TamTab, Tab_bot_R),
-    write(Tab_bot_R).
+    write(Tab_bot_R),
 
+    iniciaJogoComMaquina(Tabuleiro_Jogador_Final, Tabuleiro_Jogador_Ve_Bot, Tabuleiro_Bot, Tabuleiro_Bot_Ve_Jogador, TamTab, Dados).
+
+
+iniciaJogoComMaquina(Tab_J, Tab_J_Ve_B, Tab_B, Tab_B_Ve_J, TamTab, Dados):-
+    contaNavios(Tab_J, NumNavios_J),
+	contaNavios(Tab_B, NumNavios_B),
+
+	verificaFinalizacaoPartida(NumNavios_J, NumNavios_B, Continue),
+
+    (Continue -> 
+        shell(clear),
+        writeln('Esse é o tabuleiro que o Jogador vai jogar: \n'), % Mudar Frase
+        preparaTabParaPrint(Tab_J_Ve_B, 0, TamTab, Tab_J_R),
+        write(Tab_J_R),
+        writeln('\nEsse é o tabuleiro que o Bot vai jogar: \n'),
+        preparaTabParaPrint(Tab_B_Ve_J, 0, TamTab, Tab_B_R),
+        write(Tab_B_R),
+        write('Numero de navios restantes do jogador: '), write(NumNavios_J), write('\n'),
+	    write('Numero de navios restantes do bot: '), write(NumNavios_B), write('\n\n'),
+        
+        disparaNoTabuleiroBot(Tab_B, Tab_J_Ve_B, TamTab, Tab_BF, Tab_J_Ve_BF),
+        write('\nVez do bot...\n'),
+		sleep(0.9),
+		disparaNoTabuleiroJogador(Tab_J, Tab_B_Ve_J, TamTab, Tab_JF, Tab_B_Ve_JF),
+        iniciaJogoComMaquina(Tab_JF, Tab_J_Ve_BF, Tab_BF, Tab_B_Ve_JF, TamTab, Dados); 
+        
+        write('Você quer jogar novamente? [1 para sim, outro número para sair]'),
+        ler_opcao(Op),
+        (Op =:= 1 -> doWhile(true, Dados, TamTab); menu(Dados))  % VERIFICAR SE É NECESSARIO A VARIAVEL DADOS E O TRUE
+        ).
+
+
+
+contaNavios([H|[]], NumNaviosFinal):- contaNaviosLinha(H, NumNaviosFinal).
+contaNavios([H|T], NumNaviosFinal):-
+    contaNaviosLinha(H, NumNavios),
+	contaNavios(T, NumNavios2),
+	NumNaviosFinal is NumNavios + NumNavios2.
+
+contaNaviosLinha([~|[]], 0).
+contaNaviosLinha([x|[]], 0).
+contaNaviosLinha([o|[]], 0).
+contaNaviosLinha([#|[]], 1).
+contaNaviosLinha([~|T], NumNaviosFinal):-
+	contaNaviosLinha(T, NumNavios),
+	NumNaviosFinal is 0 + NumNavios.
+contaNaviosLinha([x|T], NumNaviosFinal):-
+	contaNaviosLinha(T, NumNavios),
+	NumNaviosFinal is 0 + NumNavios.
+contaNaviosLinha([o|T], NumNaviosFinal):-
+	contaNaviosLinha(T, NumNavios),
+	NumNaviosFinal is 0 + NumNavios.
+contaNaviosLinha([#|T], NumNaviosFinal):-
+	contaNaviosLinha(T, NumNavios),
+	NumNaviosFinal is 1 + NumNavios.
+
+verificaFinalizacaoPartida(0, K, false):-
+	K \= 0,
+    writeln('Que pena você perdeu! Seus navios foram para o fundo do mar!').
+
+verificaFinalizacaoPartida(_, 0, false):-
+    writeln('Você é um verdadeiro almirante! Parabéns pela vitória na batalha naval.').
+
+verificaFinalizacaoPartida(A, B, true):- A =\= 0, B =\= 0.
+
+disparaNoTabuleiroBot(Tab_B, Tab_J_Ve_B, TamTab, Tab_Bot_Final, Tab_Jogador_Ve_Bot_Final):-
+    write('Sua vez de disparar.\n'),
+    write('Insira as posicoes X de 1 a '), write(TamTab), write(' e Y de 1 a '), write(TamTab), write('\n'),
+
+	write('\nValor de X: '),
+    read(X),
+    write('\nValor de Y: '),
+    read(Y),
+
+	verificaEntrada(X, TamTab, R1),
+	verificaEntrada(Y, TamTab, R2),
+
+	verificaSeJaFoiDisparadoNoBot(Tab_J_Ve_B, X, Y, Resul),
+
+	(R1, R2, Resul) -> (
+		selecionaSimboloNavio(Tab_B, X, Y, Simbolo),
+		posicionaSimboloNoNavio(Tab_B, Tab_J_Ve_B, X, Y, Simbolo, TamTab, Tab_Bot_Final, Tab_Jogador_Ve_Bot_Final)
+	);
+	write('Posicao invalida, digite uma nova posicao valida.\n'),
+	disparaNoTabuleiroBot(Tab_B, Tab_J_Ve_B, TamTab, Tab_Bot_Final, Tab_Jogador_Ve_Bot_Final).
+
+
+% VERIFICA SE ESSAS FUNÇÕES FUNCIONAM
+verificaSeJaFoiDisparadoNoBot(Tab, X, Y, R):-
+    nth1(X, Tab, Linha),
+	nth1(Y, Linha, Elemento),
+	foiDisparadoNoBot(Elemento, R).
+
+
+% VERIFICA SE ESSAS FUNÇÕES FUNCIONAM
+foiDisparadoNoBot(x, false).
+foiDisparadoNoBot(o, false).
+foiDisparadoNoBot(#, true).
+foiDisparadoNoBot(~, true).
+foiDisparadoNoBot(E, R):- E \= x, E \= o, R = true.
+
+
+selecionaSimboloNavio(Tab, X, Y, SimboloFinal):-
+	nth1(X, Tab, Linha),
+	nth1(Y, Linha, Simbolo),
+	simboloRetornado(Simbolo, SimboloFinal).
+
+simboloRetornado(#, x).
+simboloRetornado(~, o).
+
+
+posicionaSimboloNoNavio(Tab_B, Tab_J_Ve_B, X, Y, x, TamTab, Tab_Bot_Final, Tab_J_Ve_Bot_Final):-
+	write('Voce acertou um navio!\n'),
+	posicionaSimbolo(Tab_B, X, Y, x, TamTab, Tab_Bot_Final),
+	posicionaSimbolo(Tab_J_Ve_B, X, Y, x, TamTab, Tab_J_Ve_Bot_Final).
+
+
+posicionaSimboloNoNavio(Tab_B, Tab_J_Ve_B, X, Y, o, TamTab, Tab_B, Tab_J_Ve_Bot_Final):-
+	write('Voce acertou na agua!\n'),
+	posicionaSimbolo(Tab_J_Ve_B, X, Y, o, TamTab, Tab_J_Ve_Bot_Final).
+
+
+posicionaSimbolo(Tab, X, Y, Simbolo, TamTab, Tab_Final):-
+	X_Aux is X - 1,
+	Y_Aux is Y - 1,
+  colocaSimboloNoTabuleiro(Tab, 1, X_Aux, Y_Aux, Simbolo, TamTab, Tab_Final).
+
+colocaSimboloNoTabuleiro([H|[]], 1, 0, Y, Elemento, TamTab, R):- 
+  montaListaComSimbolo(H, 0, TamTab, Y, Y, [], Elemento, true, R).
     
-% nao usem ainda estou testando, mas vou subir mesmo assim    
-% iniciaJogoComMaquina(TabJogador, TabJogo, TabBot, TabBotJogo, TamTabuleiro, NomeJogador, Dados, NovosDados) :-
-%    writeln("Tabuleiro de "),
-%    writeln(NomeJogador),
-%    writeln(":\n"),
-%     printaTabuleiro(TabJogo, TamTabuleiro),
-%     writeln("Tabuleiro do Bot:\n"),
-%     printaTabuleiro(TabBotJogo, TamTabuleiro),
-% 
-%    contaNavios(TabJogador, TamTabuleiro, NaviosJog),
-%    contaNavios(TabBot, TamTabuleiro, NaviosBot),
-% 
-%     writeln("Número de navios restantes do jogador: "),
-%     writeln(NaviosJog),
-%     writeln("Número de navios restantes do bot: "),
-%     writeln(NaviosBot),
-% 
-%     (NaviosJog =:= 0 ->
-%         writeln("Que pena você perdeu! Seus navios foram para o fundo do mar!"),
-%        NovosDados = Dados
-%    ; NaviosBot =:= 0 ->
-%        writeln("Você é um verdadeiro almirante! Parabéns pela vitória na batalha naval."),
-%        atualizaPontuacao(Dados, NomeJogador, NovosDados)
-%    ; disparaNoTabuleiroBot(TabBot, TabBotJogo, TabJogador, TabJogo, TamTabuleiro, NovoTabBot, % NovoTabBotJogo, NovoTabJogador, NovoTabJogo),
-%     disparaNoTabuleiroJogador(NovoTabJogador, NovoTabJogo, NovoTabBot, NovoTabBotJogo, TamTabuleiro, % NovoTabJogador2, NovoTabJogo2, NovoTabBot2, NovoTabBotJogo2),
-%      iniciaJogoComMaquina(NovoTabJogador2, NovoTabJogo2, NovoTabBot2, NovoTabBotJogo2, TamTabuleiro, % NomeJogador, Dados, NovosDados)
-%    ).
+colocaSimboloNoTabuleiro([H|T], 1, 0, Y, Elemento, TamTab, R):-
+  montaListaComSimbolo(H, 0, TamTab, Y, Y, [], Elemento, false, R1),
+  colocaSimboloNoTabuleiro(T, 1, -1, Y, Elemento, TamTab, R2),
+  append([R1], R2, R).
+    
+colocaSimboloNoTabuleiro([H|[]], _, X, _, _, _, [H]):- X =\= 0.
+    
+colocaSimboloNoTabuleiro([H|T], 1, X, Y, Elemento, TamTab, R):-
+  X =\= 0,
+  Novo_X is X - 1,
+  colocaSimboloNoTabuleiro(T, 1, Novo_X, Y, Elemento, TamTab, R1),
+  append([H], R1, R).
+    
+montaListaComSimbolo(_, TamTab, TamTab, _, _, NovaLista, _, true, R):- R = [NovaLista].
+montaListaComSimbolo(_, TamTab, TamTab, _, _, NovaLista, _, false, R):- R = NovaLista.
+montaListaComSimbolo(Lista, I, TamTab, MinI, MaxI, ListaSaida, Elemento, Boolean, R):-
+  I >= 0,
+  I < TamTab,
+  ((I < MinI); (I > MaxI)) ->
+  (nth0(I, Lista, ElementoAdicionado),
+  NovoI is I + 1,
+  append(ListaSaida, [ElementoAdicionado], NovoListaSaida),
+  montaListaComSimbolo(Lista, NovoI, TamTab, MinI, MaxI, NovoListaSaida, Elemento, Boolean, R));
+  (ElementoAdicionado = Elemento,
+  NovoI is I + 1,
+  append(ListaSaida, [ElementoAdicionado], NovoListaSaida),
+  montaListaComSimbolo(Lista, NovoI, TamTab, MinI, MaxI, NovoListaSaida, Elemento, Boolean, R)).
 
-% contaNavios(Tabuleiro, TamTabuleiro, Contagem) :-
-%    findall(Navio, (between(0, TamTabuleiro, X), between(0, TamTabuleiro, Y), % verificaTemNavioNaLinha(Tabuleiro, X, Y, 1, Navio)), Navios),
-%    length(Navios, Contagem).
+
+
+
+
+
+
+
+
+
+disparaNoTabuleiroJogador(Tab_J, Tab_B_Ve_J, TamTab, Tab_JF, Tab_B_Ve_JF):-
+    Tamanho is TamTab + 1,
+	random(1, Tamanho, X),
+	random(1, Tamanho, Y),
+
+	verificaJaDisparadoAoJogador(Tab_B_Ve_J, X, Y, Tamanho, Resposta),
+
+	Resposta -> (
+		selecionaSimboloNavio(Tab_J, X, Y, Simbolo),
+		posicionaSimboloNoNavio(Tab_J, Tab_B_Ve_J, X, Y, Simbolo, TamTab, Tab_JF, Tab_B_Ve_JF)
+	);
+	disparaNoTabuleiroJogador(Tab_J, Tab_B_Ve_J, TamTab, Tab_JF, Tab_B_Ve_JF).
+
+
+verificaJaDisparadoAoJogador(Tab, X, Y, Tamanho, R):-
+	(X > 0, X < Tamanho, Y > 0, Y < Tamanho) -> (
+		nth1(X, Tab, Linha),
+		nth1(Y, Linha, Elemento),
+		ehDisparoAoJogador(Elemento, R)
+	);
+	R = false.
+
+% AJEITAR
+ehDisparoAoJogador(x, false).
+ehDisparoAoJogador(o, false).
+ehDisparoAoJogador(#, true).
+ehDisparoAoJogador(~, true).
+
+
 
 
 
