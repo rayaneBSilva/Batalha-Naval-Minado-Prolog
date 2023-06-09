@@ -138,7 +138,7 @@ prepararJogo(Dados, TamTab) :-
     executarOpcaoJogo(Dados, Op, TamTab).
 
 executarOpcaoJogo(Dados, 0, _) :-
-    menu.
+    menu(Dados).
     
 
 executarOpcaoJogo(Dados, 1, TamTab) :-
