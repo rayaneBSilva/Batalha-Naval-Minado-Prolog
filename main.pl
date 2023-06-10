@@ -2,9 +2,9 @@
 :- dynamic jogador/2. % dynamic para permitir a modificação em tempo de execução
 :- dynamic tabuleiro/1.
 
-:- use_module(library(string)).
+% :- use_module(library(string)).
 
-% função que inicia o programa
+% regra que inicia o programa
 main :-
     exibirConteudoArquivo('introducao.txt'),
     sleep(1), % aguarda 5 segundos
@@ -14,7 +14,7 @@ main :-
 :- dynamic(jogador/1).
 :- dynamic(tabuleiro/1).
 
-% Função que exibe o conteúdo de um arquivo
+% regra que exibe o conteúdo de um arquivo
 exibirConteudoArquivo(NomeArquivo) :-
     open(NomeArquivo, read, Stream),
     repeat,
@@ -28,7 +28,7 @@ exibirConteudoArquivo(NomeArquivo) :-
 
 % ---------- MENU ----------
 
-% função que exibe o Menu
+% regra que exibe o Menu
 menu(Dados) :-
     shell(clear), % limpa a tela
     writeln('-------------------- Batalha Naval --------------------'),
@@ -40,12 +40,9 @@ menu(Dados) :-
     ler_opcao(Op),
     executarOpcao(Dados, Op).
 
-ler_opcao(Op):-
-    write('→ Opção:'),nl,
-    read(Op).
     
-% função para manipular a opção escolhida pelo usuário
-executarOpcao(Dados, 0) :-
+% regras para manipular a opção escolhida pelo usuário
+executarOpcao(_, 0) :-
     writeln('\nA água esquece o nome dos afogados...'),
     true.
 
@@ -64,16 +61,20 @@ executarOpcao(Dados,3) :-
     read(_),
     menu(Dados).
 
-
 executarOpcao(Dados, 4) :-
     exibirConteudoArquivoLentamente('historia.txt'),
     writeln("Pressione qualquer número para voltar ao menu."),
     read(_),
     menu(Dados).
 
+executarOpcao(Dados, _) :-
+    Opcao \= 0, Opcao \= 1, Opcao \= 2, Opcao \= 3, Opcao \= 4,
+    writeln('Opção inválida... Pressione ENTER para tentar novamente!\n'),
+    read(_),
+    menu(Dados).
 
 % ---------- CADASTRA JOGADOR ----------
-
+% regra responsável pelo cadastro de jogadores
 cadastrarJogador(Dados, NovosDados) :-
     shell(clear), % limpa a tela
     writeln('                  Cadastro de jogadores                  '),
@@ -96,13 +97,14 @@ cadastrarJogador(Dados, NovosDados) :-
     ).
 
 
-
+% regra para verificar se um jogador existe
 existeJogador(Arquivo, Nome) :-
     open(Arquivo, read, Stream), 
     existeJogadorAux(Stream, Nome),  
     close(Stream).
     
-% Função auxiliar para verificar se um jogador já existe no arquivo
+
+% regra auxiliar para verificar se um jogador já existe no arquivo
 existeJogadorAux(Stream, Nome) :-
     \+ at_end_of_stream(Stream),             
     read(Stream, jogador(NomeArquivo, _)),    
@@ -112,7 +114,7 @@ existeJogadorAux(Stream, Nome) :-
     ).
 
 
-% Função auxiliar para salvar a lista de jogadores no arquivo
+% regra auxiliar para salvar a lista de jogadores no arquivo
 salvarJogadores(_, []).
 salvarJogadores(Arquivo, [jogador(Nome, Pontuacao) | Jogadores]) :-
     open(Arquivo, append, Stream), 
@@ -120,6 +122,8 @@ salvarJogadores(Arquivo, [jogador(Nome, Pontuacao) | Jogadores]) :-
     close(Stream),
     salvarJogadores(Arquivo, Jogadores).
 
+
+% regra para imprimir lentamente a introdução do jogo
 exibirConteudoArquivoLentamente(NomeArquivo) :-
     phrase_from_file(conteudoArquivo(T), NomeArquivo),
     imprimirLentamente(T).
@@ -136,7 +140,8 @@ imprimirLentamente([C|Cs]) :-
     flush_output,
     imprimirLentamente(Cs).
 
-    
+
+% regra que prepara o segundo menu do jogo  
 prepararJogo(Dados, TamTab) :-
     shell(clear), % limpa a tela
     writeln('-------------------- Batalha Naval --------------------'),
@@ -147,10 +152,11 @@ prepararJogo(Dados, TamTab) :-
     ler_opcao(Op),
     executarOpcaoJogo(Dados, Op, TamTab).
 
+
+% regra para manipular a opção escolhida pelo usuário do segundo menu
 executarOpcaoJogo(Dados, 0, _) :-
     menu(Dados).
     
-
 executarOpcaoJogo(Dados, 1, TamTab) :-
    doWhile(true, Dados, TamTab).
 
@@ -161,21 +167,14 @@ executarOpcaoJogo(Dados, 3, _) :-
     pegaTamanhoTabuleiro(3, TamTab),
     prepararJogo(Dados, TamTab).
 
-
-pegaTamanhoTabuleiro(3, Tam) :-
-    shell(clear),
-    writeln('-------------------- Batalha Naval --------------------'),
-    writeln('\n • Qual o novo tamanho do tabuleiro? (Digite somente um valor ex: 10)\n\n'),
-    ler_opcao(Tam).
-
-pegaTamanhoTabuleiro(_, 10).
-
-executarOpcaoJogo(Dados, Opcao, TamTab) :-
-    Opcao \= 3,
+executarOpcaoJogo(Dados, _, _) :-
+    Opcao \= 3, Opcao \= 0, Opcao \= 1, Opcao \= 2,
     writeln('Opção inválida... Pressione ENTER para tentar novamente!\n'),
     read(_),
-    menu(Dados, TamTab).
+    menu(Dados).
 
+
+% regra que executa um loop do jogo com o bot
 doWhile(true, Dados, TamTab):-
     shell(clear),
     montaTabuleiros(Tabuleiro_Jogador, Tabuleiro_Jogador_Ve_Bot, Tabuleiro_Bot, Tabuleiro_Bot_Ve_Jogador, TamTab),
@@ -191,7 +190,141 @@ doWhile(true, Dados, TamTab):-
 
     iniciaJogoComMaquina(Tabuleiro_Jogador_Final, Tabuleiro_Jogador_Ve_Bot, Tabuleiro_Bot, Tabuleiro_Bot_Ve_Jogador, TamTab, Dados).
 
+doWhile(false, Dados, _):- menu(Dados).
 
+
+% regra que executa um loop do jogo com dois jogadores
+doWhileJogoCom2(true, Dados, TamTab, NovosDados) :-
+    shell('clear'),
+    chamaJogador(Dados, '', "1", Jogador1),
+    chamaJogador(Dados, Jogador1, "2", Jogador2),
+    
+    (
+        (Jogador1 = "JogadorNaoExiste"; Jogador2 = "JogadorNaoExiste") ->
+        doWhileJogoCom2(true, Dados, TamTab, NovosDados)
+        ;
+        (
+            shell('clear'),
+            montaTabuleirosDeDoisJogadores(Tabuleiro_Jogador1, Tabuleiro_Jogador1_Ve_Jog2, Tabuleiro_Jogador2, Tabuleiro_Jogador2_Ve_Jog1, TamTab),
+            montaTabuleiroJogador(Tabuleiro_Jogador1, TamTab, Tabuleiro_Jogador1_Final),
+            montaTabuleiroJogador(Tabuleiro_Jogador2, TamTab, Tabuleiro_Jogador2_Final),
+            
+            shell('clear'),
+            writeln('Tabuleiro do Jogador 1: \n'),
+            preparaTabParaPrint(Tabuleiro_Jogador1_Final, 0, TamTab, Tab_R),
+            write(Tab_R),
+            writeln('Tabuleiro do Jogador 2: \n'),
+            preparaTabParaPrint(Tabuleiro_Jogador2_Final, 0, TamTab, Tab_R2),
+            write(Tab_R2),
+            
+            iniciaJogoComJogadores(Tabuleiro_Jogador1_Final, Tabuleiro_Jogador1_Ve_Jog2, Tabuleiro_Jogador2_Final, Tabuleiro_Jogador2_Ve_Jog1, TamTab, Dados, NovosDados)
+        )
+    ).
+
+
+% regra que pega o tamanho do tabuleiro escolhido pelo usuario
+pegaTamanhoTabuleiro(3, Tam) :-
+    shell(clear),
+    writeln('-------------------- Batalha Naval --------------------'),
+    writeln('\n • Qual o novo tamanho do tabuleiro? (Digite somente um valor ex: 10)\n\n'),
+    ler_opcao(Tam).
+
+pegaTamanhoTabuleiro(_, 10).
+
+% regra que monta todos os tabuleiros do jogador e do bot
+montaTabuleiros(Tabuleiro_Jogador, Tabuleiro_Jogador_Ve_Bot, Tabuleiro_Bot, Tabuleiro_Bot_Ve_Jogador, TamTab) :- 
+    montaTabuleiro('', Tabuleiro_Jogador, TamTab),
+	montaTabuleiro('', Tabuleiro_Jogador_Ve_Bot, TamTab),
+	montaTabuleiro('B', Tabuleiro_Bot, TamTab),
+	montaTabuleiro('', Tabuleiro_Bot_Ve_Jogador, TamTab).
+
+% regra que monta todos os tabuleiros dos dois jogadores
+montaTabuleirosDeDoisJogadores(Tabuleiro_Jogador1, Tabuleiro_Jogador1_Ve_Jog2, Tabuleiro_Jogador2, Tabuleiro_Jogador2_Ve_Jog1, TamTab) :- 
+    montaTabuleiro('', Tabuleiro_Jogador1, TamTab),
+    montaTabuleiro('', Tabuleiro_Jogador1_Ve_Jog2, TamTab),
+    montaTabuleiro('', Tabuleiro_Jogador2, TamTab),
+    montaTabuleiro('', Tabuleiro_Jogador2_Ve_Jog1, TamTab).
+
+% regra que irá chamar a relação de montar matriz do tabuleiro do jogador
+montaTabuleiro('', Tabuleiro_Jogador, TamTab):-
+	montaMatriz(_, 0, Tabuleiro_Jogador, TamTab).
+
+% regra que irá chamar a relação de montar matriz do tabuleiro do bot
+montaTabuleiro('B', Tabuleiro_Bot, TamTab):-
+	montaMatriz(_, 0, Tab, TamTab),
+    Quantidade_de_navios is (TamTab // 2),
+    montaTabuleiroBotInteiro(Tab, Tabuleiro_Bot, Quantidade_de_navios, TamTab). 
+
+% regra que irá montar a matriz
+montaMatriz(R, TamTab, R, TamTab).
+montaMatriz(LinhaEntrada, I, R, TamTab):-
+	I >= 0,
+	I < TamTab,
+	I1 is I + 1,
+	montaListaTab(_, 0, Linha, TamTab),
+	append(LinhaEntrada, [Linha], MatrizFinal),
+	montaMatriz(MatrizFinal, I1, R, TamTab).
+
+% regra que irá montar as linhas do tabuleiro
+montaListaTab(R, TamTab, R, TamTab).
+montaListaTab(K, J, R, TamTab):-
+	J >= 0,
+	J < TamTab,
+	J1 is J + 1,
+	append(K, [~], LinhaFinal),
+	montaListaTab(LinhaFinal, J1, R, TamTab).
+
+% regra que irá montar o tabuleiro do bot já adicionando o navios
+montaTabuleiroBotInteiro(Tab, Tab_BF, 2, TamTab):- montaTabuleiroBot(Tab, 2, Tab_BF, TamTab).
+montaTabuleiroBotInteiro(Tab, Tab_BF, Quantidade_de_navios, TamTab):-
+    Quantidade_de_navios > 1,
+    montaTabuleiroBot(Tab, Quantidade_de_navios, Tab_B, TamTab),
+    Quantidade_de_navios_Atua is Quantidade_de_navios - 1, 
+    montaTabuleiroBotInteiro(Tab_B, Tab_BF, Quantidade_de_navios_Atua, TamTab).
+
+% regra que irá adicionar os navios no tabuleiro do bot
+montaTabuleiroBot(Tab, TamNavio, R, TamTab):-
+    TamTabAux is TamTab + 1,
+	random(1, TamTabAux, X),
+	random(1, TamTabAux, Y),
+	random(0, 2, Orient_I),
+    
+	verificaSeCabeNavio(Tab, X, Y, TamNavio, TamTab, Orient_I, Resultado),
+
+    
+	Resultado -> (
+		posicionaNavios(Tab, X, Y, TamNavio, TamTab, Orient_I, R) % Falta fazer essa função, tem que pensar se vai precisar do tamanho do  navio para ela
+	);
+	montaTabuleiroBot(Tab, TamNavio, R, TamTab).
+
+% regra que irá verificar se cabe um determinado navio em uma posição (X e Y), com orientação horizontal no tabuleiro
+verificaSeCabeNavio(Tab, X, Y, TamNavio, TamTab, 0, Resultado):-
+	Y_Aux is Y + TamNavio - 1,
+	Y_Aux =< TamTab -> verificaTemNavioHorizontal(Tab, X, Y, TamNavio, Resultado);
+	                    Resultado = false.
+
+% regra que irá verificar se cabe um determinado navio em uma posição (X e Y), com orientação vertical no tabuleiro
+verificaSeCabeNavio(Tab, X, Y, TamNavio, TamTab, 1, Resultado):-
+	X_Aux is X + TamNavio - 1,
+	X_Aux =< TamTab -> verificaTemNavioVertical(Tab, X, Y, TamNavio, Resultado);
+	                   Resultado = false.
+
+
+verificaTemNavioHorizontal(Tab, X, Y, TamNavio, TabResul):-
+    nth1(X, Tab, Elemento),
+    NumDrops is Y - 1,
+    drop(NumDrops, Elemento, ResulTabDrop),
+    take(TamNavio, ResulTabDrop, ResulTabTake),
+    temNavio(ResulTabTake, R1),
+    (R1 -> TabResul = false; TabResul = true). 
+
+
+verificaTemNavioVertical(Tab, X, Y, TamNavio, TabResul):-
+    transpose(Tab, TabTranspose),
+	verificaTemNavioHorizontal(TabTranspose, Y, X, TamNavio, TabResul).
+
+
+% regra responsavel por iniciar a partida com o bot
 iniciaJogoComMaquina(Tab_J, Tab_J_Ve_B, Tab_B, Tab_B_Ve_J, TamTab, Dados):-
     contaNavios(Tab_J, NumNavios_J),
 	contaNavios(Tab_B, NumNavios_B),
@@ -221,13 +354,14 @@ iniciaJogoComMaquina(Tab_J, Tab_J_Ve_B, Tab_B, Tab_B_Ve_J, TamTab, Dados):-
         ).
 
 
-
+% regra para contagem de navios no tabuleiro
 contaNavios([H|[]], NumNaviosFinal):- contaNaviosLinha(H, NumNaviosFinal).
 contaNavios([H|T], NumNaviosFinal):-
     contaNaviosLinha(H, NumNavios),
 	contaNavios(T, NumNavios2),
 	NumNaviosFinal is NumNavios + NumNavios2.
 
+% regra para contagem de navios em uma determinada linha do tabuleiro
 contaNaviosLinha([~|[]], 0).
 contaNaviosLinha([x|[]], 0).
 contaNaviosLinha([o|[]], 0).
@@ -245,15 +379,20 @@ contaNaviosLinha([#|T], NumNaviosFinal):-
 	contaNaviosLinha(T, NumNavios),
 	NumNaviosFinal is 1 + NumNavios.
 
+
+% regra que verifica se o bot venceu
 verificaFinalizacaoPartida(0, K, false):-
 	K \= 0,
     writeln('Que pena você perdeu! Seus navios foram para o fundo do mar!').
 
+% regra que verifica se o jogador venceu
 verificaFinalizacaoPartida(_, 0, false):-
     writeln('Você é um verdadeiro almirante! Parabéns pela vitória na batalha naval.').
 
 verificaFinalizacaoPartida(A, B, true):- A =\= 0, B =\= 0.
 
+
+% regra de "ataque" no tabuleiro (bot)
 disparaNoTabuleiroBot(Tab_B, Tab_J_Ve_B, TamTab, Tab_Bot_Final, Tab_Jogador_Ve_Bot_Final):-
     write('Sua vez de disparar.\n'),
     write('Insira as posicoes X de 1 a '), write(TamTab), write(' e Y de 1 a '), write(TamTab), write('\n'),
@@ -276,14 +415,13 @@ disparaNoTabuleiroBot(Tab_B, Tab_J_Ve_B, TamTab, Tab_Bot_Final, Tab_Jogador_Ve_B
 	disparaNoTabuleiroBot(Tab_B, Tab_J_Ve_B, TamTab, Tab_Bot_Final, Tab_Jogador_Ve_Bot_Final).
 
 
-% VERIFICA SE ESSAS FUNÇÕES FUNCIONAM
+% regra que verifica se uma determinada posição já foi usada pelo usuario
 verificaSeJaFoiDisparadoNoBot(Tab, X, Y, R):-
     nth1(X, Tab, Linha),
 	nth1(Y, Linha, Elemento),
 	foiDisparadoNoBot(Elemento, R).
 
 
-% VERIFICA SE ESSAS FUNÇÕES FUNCIONAM
 foiDisparadoNoBot(x, false).
 foiDisparadoNoBot(o, false).
 foiDisparadoNoBot(#, true).
@@ -299,17 +437,15 @@ selecionaSimboloNavio(Tab, X, Y, SimboloFinal):-
 simboloRetornado(#, x).
 simboloRetornado(~, o).
 
-
+% regra que adiciona o simbolo no tabuleiro que indica que achou ou não um navio durante o jogo
 posicionaSimboloNoNavio(Tab_B, Tab_J_Ve_B, X, Y, x, TamTab, Tab_Bot_Final, Tab_J_Ve_Bot_Final):-
 	write('Voce acertou um navio!\n'),
 	posicionaSimbolo(Tab_B, X, Y, x, TamTab, Tab_Bot_Final),
 	posicionaSimbolo(Tab_J_Ve_B, X, Y, x, TamTab, Tab_J_Ve_Bot_Final).
 
-
 posicionaSimboloNoNavio(Tab_B, Tab_J_Ve_B, X, Y, o, TamTab, Tab_B, Tab_J_Ve_Bot_Final):-
 	write('Voce acertou na agua!\n'),
 	posicionaSimbolo(Tab_J_Ve_B, X, Y, o, TamTab, Tab_J_Ve_Bot_Final).
-
 
 posicionaSimbolo(Tab, X, Y, Simbolo, TamTab, Tab_Final):-
 	X_Aux is X - 1,
@@ -331,7 +467,8 @@ colocaSimboloNoTabuleiro([H|T], 1, X, Y, Elemento, TamTab, R):-
   Novo_X is X - 1,
   colocaSimboloNoTabuleiro(T, 1, Novo_X, Y, Elemento, TamTab, R1),
   append([H], R1, R).
-    
+
+% regra que cria/modifica uma linha do tabuleiro com o simbolo adicionado  
 montaListaComSimbolo(_, TamTab, TamTab, _, _, NovaLista, _, true, R):- R = [NovaLista].
 montaListaComSimbolo(_, TamTab, TamTab, _, _, NovaLista, _, false, R):- R = NovaLista.
 montaListaComSimbolo(Lista, I, TamTab, MinI, MaxI, ListaSaida, Elemento, Boolean, R):-
@@ -348,14 +485,7 @@ montaListaComSimbolo(Lista, I, TamTab, MinI, MaxI, ListaSaida, Elemento, Boolean
   montaListaComSimbolo(Lista, NovoI, TamTab, MinI, MaxI, NovoListaSaida, Elemento, Boolean, R)).
 
 
-
-
-
-
-
-
-
-
+% regra de "ataque" no tabuleiro (jogadores)
 disparaNoTabuleiroJogador(Tab_J, Tab_B_Ve_J, TamTab, Tab_JF, Tab_B_Ve_JF):-
     Tamanho is TamTab + 1,
 	random(1, Tamanho, X),
@@ -374,142 +504,27 @@ verificaJaDisparadoAoJogador(Tab, X, Y, Tamanho, R):-
 	(X > 0, X < Tamanho, Y > 0, Y < Tamanho) -> (
 		nth1(X, Tab, Linha),
 		nth1(Y, Linha, Elemento),
-		ehDisparoAoJogador(Elemento, R)
+		foiDisparadoAoJogador(Elemento, R)
 	);
 	R = false.
 
-% AJEITAR
-ehDisparoAoJogador(x, false).
-ehDisparoAoJogador(o, false).
-ehDisparoAoJogador(#, true).
-ehDisparoAoJogador(~, true).
+
+foiDisparadoAoJogador(x, false).
+foiDisparadoAoJogador(o, false).
+foiDisparadoAoJogador(#, true).
+foiDisparadoAoJogador(~, true).
 
 
-
-
-
-doWhile(false, Dados, TamTab):- menu(Dados).
-
-% Relação que monta os tabuleiros
-montaTabuleiros(Tabuleiro_Jogador, Tabuleiro_Jogador_Ve_Bot, Tabuleiro_Bot, Tabuleiro_Bot_Ve_Jogador, TamTab) :- 
-  montaTabuleiro('', Tabuleiro_Jogador, TamTab),
-	montaTabuleiro('', Tabuleiro_Jogador_Ve_Bot, TamTab),
-	montaTabuleiro('B', Tabuleiro_Bot, TamTab),
-	montaTabuleiro('', Tabuleiro_Bot_Ve_Jogador, TamTab).
-
-montaTabuleiro('', Tabuleiro_Jogador, TamTab):-
-	montaMatriz(_, 0, Tabuleiro_Jogador, TamTab).
-
-montaTabuleiro('B', Tabuleiro_Bot, TamTab):-
-	montaMatriz(_, 0, Tab, TamTab),
-    Quantidade_de_navios is (TamTab // 2),
-    montaTabuleiroBotInteiro(Tab, Tabuleiro_Bot, Quantidade_de_navios, TamTab). 
-
-montaMatriz(R, TamTab, R, TamTab).
-montaMatriz(LinhaEntrada, I, R, TamTab):-
-	I >= 0,
-	I < TamTab,
-	I1 is I + 1,
-	montaListaTab(_, 0, Linha, TamTab),
-	append(LinhaEntrada, [Linha], MatrizFinal),
-	montaMatriz(MatrizFinal, I1, R, TamTab).
-
-montaListaTab(R, TamTab, R, TamTab).
-montaListaTab(K, J, R, TamTab):-
-	J >= 0,
-	J < TamTab,
-	J1 is J + 1,
-	append(K, [~], LinhaFinal),
-	montaListaTab(LinhaFinal, J1, R, TamTab).
-
-montaTabuleiroBotInteiro(Tab, Tab_BF, 2, TamTab):- montaTabuleiroBot(Tab, 2, Tab_BF, TamTab).
-montaTabuleiroBotInteiro(Tab, Tab_BF, Quantidade_de_navios, TamTab):-
-    Quantidade_de_navios > 1,
-    montaTabuleiroBot(Tab, Quantidade_de_navios, Tab_B, TamTab),
-    Quantidade_de_navios_Atua is Quantidade_de_navios - 1, 
-    montaTabuleiroBotInteiro(Tab_B, Tab_BF, Quantidade_de_navios_Atua, TamTab).
-
-
-montaTabuleiroBot(Tab, TamNavio, R, TamTab):-
-    TamTabAux is TamTab + 1,
-	random(1, TamTabAux, X),
-	random(1, TamTabAux, Y),
-	random(0, 2, Orient_I),
-    
-	verificaSeCabeNavio(Tab, X, Y, TamNavio, TamTab, Orient_I, Resultado),
-
-    
-	Resultado -> (
-		posicionaNavios(Tab, X, Y, TamNavio, TamTab, Orient_I, R) % Falta fazer essa função, tem que pensar se vai precisar do tamanho do  navio para ela
-	);
-	montaTabuleiroBot(Tab, TamNavio, R, TamTab).
-
-
-verificaSeCabeNavio(Tab, X, Y, TamNavio, TamTab, 0, Resultado):-
-	Y_Aux is Y + TamNavio - 1,
-	Y_Aux =< TamTab -> verificaTemNavioHorizontal(Tab, X, Y, TamNavio, Resultado);
-	                    Resultado = false.
-
-verificaSeCabeNavio(Tab, X, Y, TamNavio, TamTab, 1, Resultado):-
-	X_Aux is X + TamNavio - 1,
-	X_Aux =< TamTab -> verificaTemNavioVertical(Tab, X, Y, TamNavio, Resultado);
-	                   Resultado = false.
-
-
-verificaTemNavioHorizontal(Tab, X, Y, TamNavio, TabResul):-
-    nth1(X, Tab, Elemento),
-    NumDrops is Y - 1,
-    drop(NumDrops, Elemento, ResulTabDrop),
-    take(TamNavio, ResulTabDrop, ResulTabTake),
-    temNavio(ResulTabTake, R1),
-    (R1 -> TabResul = false; TabResul = true). % Se não pegar usar a função notBool
-
-
-verificaTemNavioVertical(Tab, X, Y, TamNavio, TabResul):-
-    transpose(Tab, TabTranspose),
-	verificaTemNavioHorizontal(TabTranspose, Y, X, TamNavio, TabResul).
-
-
-% Implementando a função drop de haskell em prolog
-drop(0, UltimoEle,UltimoEle) :- !.
-drop(N,[_|Tail],UltimoEle) :-
-  N > 0,
-  N1 is N - 1,
-  drop(N1,Tail,UltimoEle).
-
-% Implementando a função take de haskell em prolog
-take(0, _, []) :- !.
-take(N, [H|TailA], [H|TailB]) :-
-  N > 0,
-  N2 is N - 1,
-  take(N2, TailA, TailB).
-
-temNavio([], false).
-temNavio(['#'|_], true).
-temNavio(['#'|_], true).
-temNavio([~|T], R):- temNavio(T, R).
-temNavio([x|T], R):- temNavio(T, R).
-temNavio([o|T], R):- temNavio(T, R).
-
-
-transpose([[]|_], []).
-transpose(Tab, [Linha|Linha2]) :- transpose_coluna(Tab, Linha, TabResul),
-                                 transpose(TabResul, Linha2).
-transpose_coluna([], [], []).
-transpose_coluna([[H|T]|Linha2], [H|Hs], [T|Ts]) :- transpose_coluna(Linha2, Hs, Ts).
-
-% Função que ira posicionar os navios na horizontal
+% regra que ira posicionar os navios na horizontal
 posicionaNavios(Tab, X, Y, TamNavio, TamTab, 0, R):- posicionaNaviosHorizontal(Tab, X, Y, TamNavio, TamTab, R).
 
-% Função que ira posicionar os navios na vertical
+% regra que ira posicionar os navios na vertical
 posicionaNavios(Tab, X, Y, TamNavio, TamTab, 1, R):- posicionaNaviosVertical(Tab, X, Y, TamNavio, TamTab, R).
-
 
 posicionaNaviosVertical(Tab, X, Y, TamNavio, TamTab, Resultado):-
 	transpose(Tab, TabTransp),
 	posicionaNaviosHorizontal(TabTransp, Y, X, TamNavio, TamTab, TabResul),
 	transpose(TabResul, Resultado).
-
 
 posicionaNaviosHorizontal(Tab, X, Y, TamNavio, TamTab, Resultado):- 
   X2 is X - 1,
@@ -521,8 +536,6 @@ posicionaNaviosHorizontal(Tab, X, Y, TamNavio, TamTab, Resultado):-
   negateBool(TabResul, NotTabResul),
   (NotTabResul -> adicionandoNavioHorizontal(Tab, TamNavio, TamTab, X2, Y2, Resultado);
   Resultado = []).
-  
-  
   
   
 % Função equivalente a remonta navios
@@ -616,18 +629,11 @@ verificaLimites(Tab, "V", X, Y, TamNavio, TamTab, R):-
  
  verificaLimites(_, _, _, _, _, _, false).
 
-
 insereNavioTab(Tab, X, Y, "H", TamNavio, TamTab, R):-
 	posicionaNaviosHorizontal(Tab, X, Y, TamNavio, TamTab, R).
 
 insereNavioTab(Tab, X, Y, "V", TamNavio, TamTab, R):-
 	posicionaNaviosVertical(Tab, X, Y, TamNavio, TamTab, R).
-
-
-% Negação do Bool
-negateBool(false, true).
-negateBool(true, false).
-
 
 
 montaListaComNavio(_, TamTab, TamTab, _, _, NovaLista, true, [NovaLista]).
@@ -659,16 +665,173 @@ montaListaComNavio(Lista, I, TamTab, MinI, MaxI, ListaResul, R):-
 		montaListaComNavio(Lista, NovoI, TamTab, MinI, MaxI, NovoLSaida, R)).
 
 
+chamaJogador(Dados, NomeJogador, JogadorNum, JogadorEscolhido) :-
+    (
+        JogadorNum = "0", Mensagem = "Você deseja jogar com um jogador já cadastrado? (Digite S para sim e N para não)";
+        JogadorNum = "1", Mensagem = "Você deseja jogar com o primeiro jogador já cadastrado? (Digite S para sim e N para não)";
+        JogadorNum = "2", Mensagem = "Você deseja jogar com o segundo jogador já cadastrado? (Digite S para sim e N para não)";
+        Mensagem = "Opção inválida"
+    ),
+    writeln(Mensagem),
+    writeln("\n→ Opção:"),
+    read(Op),
+    (
+        Op = 'S' ->
+        (
+            JogadorNum = "1" ->
+            (
+                writeln("\nDigite o nome do primeiro jogador:"),
+                read(Nome1),
+                (
+                    existeJogador('dados.txt', Nome1) ->
+                    JogadorEscolhido = Nome1
+                    ;
+                    writeln("\nEsse jogador não existe."),
+                    sleep(1),
+                    chamaJogador(Dados, NomeJogador, JogadorNum, JogadorEscolhido)
+                )
+            )
+            ;
+            JogadorNum = "2" ->
+            (
+                writeln("\nDigite o nome do segundo jogador:"),
+                read(Nome2),
+                (
+                    existeJogador('dados.txt', Nome2) ->
+                    JogadorEscolhido = Nome2
+                    ;
+                    writeln("\nEsse jogador não existe."),
+                    sleep(1),
+                    chamaJogador(Dados, NomeJogador, JogadorNum, JogadorEscolhido)
+                )
+            )
+        )
+        ;
+        Op = 'N' ->
+        read(Nome),
+        JogadorEscolhido = Nome
+        ;
+        writeln("\nOpção Inválida"),
+        sleep(1),
+        chamaJogador(Dados, NomeJogador, JogadorNum, JogadorEscolhido)
+    ).
 
 
+existeJogador(Dados, Nome) :-
+    member(jogador(Nome, _), Dados).
+    
+
+iniciaJogoComJogadores(Tab_Jog1, Tab_J_Ve_J2, Tab_Jog2, Tab_J_Ve_J1, TamTab, Dados, NovosDados) :-
+    contaNavios(Tab_Jog1, NumNavios_J1),
+    contaNavios(Tab_Jog2, NumNavios_J2),
+    
+    verificaFinalizacaoPartidaComJogadores(NumNavios_J1, NumNavios_J2, Continue),
+    
+    (Continue -> 
+        shell(clear),
+        writeln('Esse é o tabuleiro que o Jogador 1 vai jogar: \n'), % Mudar Frase
+        preparaTabParaPrint(Tab_J_Ve_J2, 0, TamTab, Tab_J_R),
+        write(Tab_J_R),
+        writeln('\nEsse é o tabuleiro que o Jogador 2 vai jogar: \n'),
+        preparaTabParaPrint(Tab_J_Ve_J1, 0, TamTab, Tab_B_R),
+        write(Tab_B_R),
+        write('Numero de navios restantes do jogador: '), write(NumNavios_J1), write('\n'),
+        write('Numero de navios restantes do bot: '), write(NumNavios_J1), write('\n\n'),
+    
+        write('\nVez do jogador 1...\n'),
+        disparaNoTabuleiroBot(Tab_Jog2, Tab_J_Ve_J2, TamTab, Tab_BF, Tab_J_Ve_BF),
+        write('\nVez do jogador 2...\n'),
+        sleep(0.9),
+        disparaNoTabuleiroBot(Tab_Jog1, Tab_J_Ve_J1, TamTab, Tab_JF, Tab_B_Ve_JF),
+    
+        iniciaJogoComJogadores(Tab_JF, Tab_J_Ve_BF, Tab_BF, Tab_B_Ve_JF, TamTab, Dados, NovosDados); 
+            
+        write('Você quer jogar novamente? [1 para sim, outro número para sair]'),
+        ler_opcao(Op),
+        (Op =:= 1 -> doWhile(true, Dados, TamTab); menu(Dados))  % VERIFICAR SE É NECESSARIO A VARIAVEL DADOS E O TRUE
+    ).    
 
 
+verificaFinalizacaoPartidaComJogadores(0, K, false):-
+	K \= 0,
+    writeln('Parabéns o jogador 2 ganhou!').
+
+verificaFinalizacaoPartidaComJogadores(_, 0, false):-
+    writeln('Parabéns o jogador 1 ganhou!').
+
+verificaFinalizacaoPartidaComJogadores(A, B, true):- A =\= 0, B =\= 0.
+
+% regra que exibe ranking
+lerArquivo(NomeArquivo) :-
+    open(NomeArquivo, read, Stream),
+    lerLinhas(Stream, Linhas),
+    close(Stream),
+    delete(Linhas, end_of_file, LinhasFiltradas),
+    montarRanking(LinhasFiltradas).
+
+lerLinhas(Stream, Linhas) :-
+    lerLinhasAux(Stream, [], Linhas).
+
+lerLinhasAux(Stream, LinhasTemp, Linhas) :-
+    at_end_of_stream(Stream),
+    reverse(LinhasTemp, Linhas),
+    !.
+
+lerLinhasAux(Stream, LinhasTemp, Linhas) :-
+    \+ at_end_of_stream(Stream),
+    lerLinha(Stream, Linha),
+    lerLinhasAux(Stream, [Linha|LinhasTemp], Linhas).
+
+lerLinha(Stream, Linha) :-
+    read(Stream, Linha).
+
+montarRanking(Linhas) :-
+    delete(Linhas, end_of_file, LinhasFiltradas),
+    sort(2, @>=, LinhasFiltradas, Ranking),
+    exibirRanking(Ranking).
+
+exibirRanking([]).
+exibirRanking([jogador(Nome, Pontos)|Resto]) :-
+    format('O jogador ~w possui ~w pontos~n', [Nome, Pontos]),
+    exibirRanking(Resto).
 
 
+% regra para lê uma opção do usuario
+ler_opcao(Op):-
+    write('→ Opção:'),nl,
+    read(Op).
 
+% Negação do Bool
+negateBool(false, true).
+negateBool(true, false).
 
+% Implementando a função drop de haskell em prolog
+drop(0, UltimoEle,UltimoEle) :- !.
+drop(N,[_|Tail],UltimoEle) :-
+  N > 0,
+  N1 is N - 1,
+  drop(N1,Tail,UltimoEle).
 
+% Implementando a função take de haskell em prolog
+take(0, _, []) :- !.
+take(N, [H|TailA], [H|TailB]) :-
+  N > 0,
+  N2 is N - 1,
+  take(N2, TailA, TailB).
 
+% regra que verifica se tem uma parte do navio em uma determinada posição do tabuleiro
+temNavio([], false).
+temNavio(['#'|_], true).
+temNavio([~|T], R):- temNavio(T, R).
+temNavio([x|T], R):- temNavio(T, R).
+temNavio([o|T], R):- temNavio(T, R).
+
+% Implementando a função transpose de haskell em prolog
+transpose([[]|_], []).
+transpose(Tab, [Linha|Linha2]) :- transpose_coluna(Tab, Linha, TabResul),
+                                 transpose(TabResul, Linha2).
+transpose_coluna([], [], []).
+transpose_coluna([[H|T]|Linha2], [H|Hs], [T|Ts]) :- transpose_coluna(Linha2, Hs, Ts).
 
 % Funções so pra ve o tabuleiro, não usem tem que mudar ainda
 preparaTabParaPrint([], _, _, "").
@@ -758,25 +921,20 @@ imprimiListaComEspaco([H|T], StrInicio, R):-
     imprimiListaComEspaco(T, StrAux, R).
 
 
-% -------------------------
+
+% # % Predicado principal que executa o loop do jogo
+% # doWhileJogoCom2(Condition, Dados, TamTabuleiro, NovosDados) :-
 
 
-
-
-
-# % Predicado principal que executa o loop do jogo
-# doWhileJogoCom2(Condition, Dados, TamTabuleiro, NovosDados) :-
-
-
-#          %   jogaBombas(NovoTabuleiro_Jogador1, round(TamTabuleiro / 5), TamTabuleiro, Tabuleiro_Jogador1_Final),
-#          %   jogaBombas(NovoTabuleiro_Jogador2, round(TamTabuleiro / 5), TamTabuleiro, Tabuleiro_Jogador2_Final),
-#          %   jogaBombasBonus(Tabuleiro_Jogador1_Final, round(TamTabuleiro / 5), TamTabuleiro, Tabuleiro_Jogador1_Final_Final),
-#          %   jogaBombasBonus(Tabuleiro_Jogador2_Final, round(TamTabuleiro / 5), TamTabuleiro, Tabuleiro_Jogador2_Final_Final),
+% #          %   jogaBombas(NovoTabuleiro_Jogador1, round(TamTabuleiro / 5), TamTabuleiro, Tabuleiro_Jogador1_Final),
+% #          %   jogaBombas(NovoTabuleiro_Jogador2, round(TamTabuleiro / 5), TamTabuleiro, Tabuleiro_Jogador2_Final),
+% #          %   jogaBombasBonus(Tabuleiro_Jogador1_Final, round(TamTabuleiro / 5), TamTabuleiro, Tabuleiro_Jogador1_Final_Final),
+% #          %   jogaBombasBonus(Tabuleiro_Jogador2_Final, round(TamTabuleiro / 5), TamTabuleiro, Tabuleiro_Jogador2_Final_Final),
             
-#             iniciaJogoComJogadores(Tabuleiro_Jogador1_Final, Tabuleiro_Jogador1_Ve_Jog2, Tabuleiro_Jogador2_Final, Tabuleiro_Jogador2_Ve_Jog1, TamTabuleiro, Dados).
-#   ;
-#     menu(Dados, NovosDados)
-#   ).
+% #             iniciaJogoComJogadores(Tabuleiro_Jogador1_Final, Tabuleiro_Jogador1_Ve_Jog2, Tabuleiro_Jogador2_Final, Tabuleiro_Jogador2_Ve_Jog1, TamTabuleiro, Dados).
+% #   ;
+% #     menu(Dados, NovosDados)
+%#   ).
 
 
 
@@ -784,264 +942,97 @@ imprimiListaComEspaco([H|T], StrInicio, R):-
 
 
 
-# % Predicado para jogar bombas aleatoriamente no tabuleiro
-# #jogaBombas(Tab, 0, _, Tab).
-# jogaBombas(Tab, QtdBombas, TamTabuleiro, TabFinal) :-
-#   random(0, TamTabuleiro, PosI),
-#   random(0, TamTabuleiro, PosJ),
-#   (
-#     verificaPosicaoValida(Tab, PosI, PosJ) ->
-#       adicionaBomba(Tab, PosI, PosJ, 'X', TabFinalTemp),
-#       QtdBombasRestantes is QtdBombas - 1,
-#       jogaBombas(TabFinalTemp, QtdBombasRestantes, TamTabuleiro, TabFinal)
-#     ;
-#       jogaBombas(Tab, QtdBombas, TamTabuleiro, TabFinal)
-#   ).
+%# % Predicado para jogar bombas aleatoriamente no tabuleiro
+% # #jogaBombas(Tab, 0, _, Tab).
+% # jogaBombas(Tab, QtdBombas, TamTabuleiro, TabFinal) :-
+% #   random(0, TamTabuleiro, PosI),
+% #   random(0, TamTabuleiro, PosJ),
+% #   (
+% #     verificaPosicaoValida(Tab, PosI, PosJ) ->
+% #       adicionaBomba(Tab, PosI, PosJ, 'X', TabFinalTemp),
+% #       QtdBombasRestantes is QtdBombas - 1,
+% #       jogaBombas(TabFinalTemp, QtdBombasRestantes, TamTabuleiro, TabFinal)
+% #     ;
+% #       jogaBombas(Tab, QtdBombas, TamTabuleiro, TabFinal)
+% #   ).
 
-# % Predicado para adicionar uma bomba no tabuleiro
-# adicionaBomba([], _, _, _, []).
-# adicionaBomba([H|T], ValorX, ValorY, Simbolo, [HFinal|TFinal]) :-
-#   (
-#     ValorX = 0 ->
-#       string_chars(H, HChars),
-#       replace_element_at_index(HChars, ValorY, Simbolo, HFinalChars),
-#       string_chars(HFinal, HFinalChars)
-#     ;
-#       HFinal = H
-#   ),
-#   ValorXTemp is ValorX - 1,
-#   adicionaBomba(T, ValorXTemp, ValorY, Simbolo, TFinal).
+% # % Predicado para adicionar uma bomba no tabuleiro
+% # adicionaBomba([], _, _, _, []).
+% # adicionaBomba([H|T], ValorX, ValorY, Simbolo, [HFinal|TFinal]) :-
+% #   (
+% #     ValorX = 0 ->
+% #       string_chars(H, HChars),
+% #       replace_element_at_index(HChars, ValorY, Simbolo, HFinalChars),
+% #       string_chars(HFinal, HFinalChars)
+%#     ;
+%#       HFinal = H
+%#   ),
+%#   ValorXTemp is ValorX - 1,
+%#   adicionaBomba(T, ValorXTemp, ValorY, Simbolo, TFinal).
 
-# % Predicado para verificar se há uma bomba adjacente a uma posição
-# temBombaAdjacente(Tab, PosI, PosJ) :-
-#   (
-#     PosITemp is PosI - 1,
-#     PosITemp >= 0,
-#     verificaTemElemento(Tab, PosITemp, PosJ)
-#   ) ;
-#   (
-#     PosJTemp is PosJ - 1,
-#     PosJTemp >= 0,
-#     verificaTemElemento(Tab, PosI, PosJTemp)
-#   ) ;
-#   (
-#     PosI < length(Tab),
-#     verificaTemElemento(Tab, PosI, PosJ)
-#   ) ;
-#   (
-#     PosJ < length(H),
-#     verificaTemElemento(Tab, PosI, PosJ)
-#   ).
+%# % Predicado para verificar se há uma bomba adjacente a uma posição
+%# temBombaAdjacente(Tab, PosI, PosJ) :-
+%#   (
+%#     PosITemp is PosI - 1,
+%#     PosITemp >= 0,
+%#     verificaTemElemento(Tab, PosITemp, PosJ)
+%#   ) ;
+%#   (
+%#     PosJTemp is PosJ - 1,
+%#     PosJTemp >= 0,
+%#     verificaTemElemento(Tab, PosI, PosJTemp)
+%#   ) ;
+%#   (
+%%#     verificaTemElemento(Tab, PosI, PosJ)
+%#   ) ;
+%#   (
+%#     PosJ < length(H),
+%#     verificaTemElemento(Tab, PosI, PosJ)
+%#   ).
 
-# % Predicado para jogar bombas bônus no tabuleiro
-# jogaBombasBonus(Tab, 0, _, Tab).
-# jogaBombasBonus(Tab, QtdBombas, TamTabuleiro, TabFinal) :-
-#   random(0, TamTabuleiro, PosI),
-#   random(0, TamTabuleiro, PosJ),
-#   writeln(PosI),
-#   writeln(PosJ),
-#   (
-#     verificaPosicaoValida(Tab, PosI, PosJ) ->
-#       adicionaBomba(Tab, PosI, PosJ, 'B', TabFinalTemp),
-#       QtdBombasRestantes is QtdBombas - 1,
-#       jogaBombasBonus(TabFinalTemp, QtdBombasRestantes, TamTabuleiro, TabFinal)
-#     ;
-#       jogaBombasBonus(Tab, QtdBombas, TamTabuleiro, TabFinal)
-#   ).
+%# % Predicado para jogar bombas bônus no tabuleiro
+%# jogaBombasBonus(Tab, 0, _, Tab).
+%# jogaBombasBonus(Tab, QtdBombas, TamTabuleiro, TabFinal) :-
+%#   random(0, TamTabuleiro, PosI),
+%#   random(0, TamTabuleiro, PosJ),
+%#   writeln(PosI),
+%#   writeln(PosJ),
+%#   (
+%#     verificaPosicaoValida(Tab, PosI, PosJ) ->
+%#       adicionaBomba(Tab, PosI, PosJ, 'B', TabFinalTemp),
+%#       QtdBombasRestantes is QtdBombas - 1,
+%#       jogaBombasBonus(TabFinalTemp, QtdBombasRestantes, TamTabuleiro, TabFinal)
+%#     ;
+%#       jogaBombasBonus(Tab, QtdBombas, TamTabuleiro, TabFinal)
+%#   ).
 
 
-# iniciaJogoComJogadores (Tab_Jog1, Tab_J_Ve_J2, Tab_Jog2, Tab_J_Ve_J1, TamTab, Dados) :-
-#   contaNavios(Tab_Jog1, NumNavios_J1),
-# 	contaNavios(Tab_Jog2, NumNavios_J2),
+%# iniciaJogoComJogadores (Tab_Jog1, Tab_J_Ve_J2, Tab_Jog2, Tab_J_Ve_J1, TamTab, Dados) :-
+%#   contaNavios(Tab_Jog1, NumNavios_J1),
+%# 	contaNavios(Tab_Jog2, NumNavios_J2),
 
-# 	verificaFinalizacaoPartida(NumNavios_J1, NumNavios_J2, Continue),
+%# 	verificaFinalizacaoPartida(NumNavios_J1, NumNavios_J2, Continue),
 
-#     (Continue -> 
-#         shell(clear),
-#         writeln('Esse é o tabuleiro que o Jogador 1 vai jogar: \n'), % Mudar Frase
-#         preparaTabParaPrint(Tab_J_Ve_J2, 0, TamTab, Tab_J_R),
-#         write(Tab_J_R),
-#         writeln('\nEsse é o tabuleiro que o Jogador 2 vai jogar: \n'),
-#         preparaTabParaPrint(Tab_J_Ve_J1, 0, TamTab, Tab_B_R),
-#         write(Tab_B_R),
-#         write('Numero de navios restantes do jogador: '), write(NumNavios_J1), write('\n'),
-# 	      write('Numero de navios restantes do bot: '), write(NumNavios_J1), write('\n\n'),
+%#     (Continue -> 
+%#         shell(clear),
+%#         writeln('Esse é o tabuleiro que o Jogador 1 vai jogar: \n'), % Mudar Frase
+%#         preparaTabParaPrint(Tab_J_Ve_J2, 0, TamTab, Tab_J_R),
+% #         write(Tab_J_R),
+% #         writeln('\nEsse é o tabuleiro que o Jogador 2 vai jogar: \n'),
+% #         preparaTabParaPrint(Tab_J_Ve_J1, 0, TamTab, Tab_B_R),
+% #         write(Tab_B_R),
+% #         write('Numero de navios restantes do jogador: '), write(NumNavios_J1), write('\n'),
+% # 	      write('Numero de navios restantes do bot: '), write(NumNavios_J1), write('\n\n'),
 
-#         write('\nVez do jogador 1...\n'),
-#         disparaNoTabuleiroBot(Tab_Jog2, Tab_J_Ve_J2, TamTab, Tab_BF, Tab_J_Ve_BF),
-#         write('\nVez do bot...\n'),
-# 		    sleep(0.9),
-#         disparaNoTabuleiroBot(Tab_Jog1, Tab_J_Ve_J1, TamTab, Tab_JF, Tab_B_Ve_JF),
+%#         write('\nVez do jogador 1...\n'),
+%#         disparaNoTabuleiroBot(Tab_Jog2, Tab_J_Ve_J2, TamTab, Tab_BF, Tab_J_Ve_BF),
+%#         write('\nVez do bot...\n'),
+%# 		    sleep(0.9),
+%#         disparaNoTabuleiroBot(Tab_Jog1, Tab_J_Ve_J1, TamTab, Tab_JF, Tab_B_Ve_JF),
 
-#         iniciaJogoComJogadores(Tab_JF, Tab_J_Ve_BF, Tab_BF, Tab_B_Ve_JF, TamTab, Dados); 
+%#         iniciaJogoComJogadores(Tab_JF, Tab_J_Ve_BF, Tab_BF, Tab_B_Ve_JF, TamTab, Dados); 
         
-#         write('Você quer jogar novamente? [1 para sim, outro número para sair]'),
-#         ler_opcao(Op),
-#         (Op =:= 1 -> doWhile(true, Dados, TamTab); menu(Dados))  % VERIFICAR SE É NECESSARIO A VARIAVEL DADOS E O TRUE
-#         ).
-
-
-
-% -------------------
-doWhileJogoCom2(true, Dados, TamTab, NovosDados) :-
-    shell('clear'),
-    chamaJogador(Dados, '', "1", Jogador1),
-    chamaJogador(Dados, Jogador1, "2", Jogador2),
-    
-    (
-        (Jogador1 = "JogadorNaoExiste"; Jogador2 = "JogadorNaoExiste") ->
-        doWhileJogoCom2(true, Dados, TamTab, NovosDados)
-        ;
-        (
-            shell('clear'),
-            montaTabuleirosDeDoisJogadores(Tabuleiro_Jogador1, Tabuleiro_Jogador1_Ve_Jog2, Tabuleiro_Jogador2, Tabuleiro_Jogador2_Ve_Jog1, TamTab),
-            montaTabuleiroJogador(Tabuleiro_Jogador1, TamTab, Tabuleiro_Jogador1_Final),
-            montaTabuleiroJogador(Tabuleiro_Jogador2, TamTab, Tabuleiro_Jogador2_Final),
-            
-            shell('clear'),
-            writeln('Tabuleiro do Jogador 1: \n'),
-            preparaTabParaPrint(Tabuleiro_Jogador1_Final, 0, TamTab, Tab_R),
-            write(Tab_R),
-            writeln('Tabuleiro do Jogador 2: \n'),
-            preparaTabParaPrint(Tabuleiro_Jogador2_Final, 0, TamTab, Tab_R2),
-            write(Tab_R2),
-            
-            iniciaJogoComJogadores(Tabuleiro_Jogador1_Final, Tabuleiro_Jogador1_Ve_Jog2, Tabuleiro_Jogador2_Final, Tabuleiro_Jogador2_Ve_Jog1, TamTab, Dados, NovosDados)
-        )
-    ).
-
-chamaJogador(Dados, NomeJogador, JogadorNum, JogadorEscolhido) :-
-    (
-        JogadorNum = "0", Mensagem = "Você deseja jogar com um jogador já cadastrado? (Digite S para sim e N para não)";
-        JogadorNum = "1", Mensagem = "Você deseja jogar com o primeiro jogador já cadastrado? (Digite S para sim e N para não)";
-        JogadorNum = "2", Mensagem = "Você deseja jogar com o segundo jogador já cadastrado? (Digite S para sim e N para não)";
-        Mensagem = "Opção inválida"
-    ),
-    writeln(Mensagem),
-    writeln("\n→ Opção:"),
-    read(Op),
-    (
-        Op = 'S' ->
-        (
-            JogadorNum = "1" ->
-            (
-                writeln("\nDigite o nome do primeiro jogador:"),
-                read(Nome1),
-                (
-                    existeJogador('dados.txt', Nome1) ->
-                    JogadorEscolhido = Nome1
-                    ;
-                    writeln("\nEsse jogador não existe."),
-                    sleep(1),
-                    chamaJogador(Dados, NomeJogador, JogadorNum, JogadorEscolhido)
-                )
-            )
-            ;
-            JogadorNum = "2" ->
-            (
-                writeln("\nDigite o nome do segundo jogador:"),
-                read(Nome2),
-                (
-                    existeJogador('dados.txt', Nome2) ->
-                    JogadorEscolhido = Nome2
-                    ;
-                    writeln("\nEsse jogador não existe."),
-                    sleep(1),
-                    chamaJogador(Dados, NomeJogador, JogadorNum, JogadorEscolhido)
-                )
-            )
-        )
-        ;
-        Op = 'N' ->
-        read(Nome),
-        JogadorEscolhido = Nome
-        ;
-        writeln("\nOpção Inválida"),
-        sleep(1),
-        chamaJogador(Dados, NomeJogador, JogadorNum, JogadorEscolhido)
-    ).
-
-
-existeJogador(Dados, Nome) :-
-    member(jogador(Nome, _), Dados).
-    
-    
-iniciaJogoComJogadores(Tab_Jog1, Tab_J_Ve_J2, Tab_Jog2, Tab_J_Ve_J1, TamTab, Dados) :-
-    contaNavios(Tab_Jog1, NumNavios_J1),
-    contaNavios(Tab_Jog2, NumNavios_J2),
-    
-    verificaFinalizacaoPartidaComJogadores(NumNavios_J1, NumNavios_J2, Continue),
-    
-    (Continue -> 
-        shell(clear),
-        writeln('Esse é o tabuleiro que o Jogador 1 vai jogar: \n'), % Mudar Frase
-        preparaTabParaPrint(Tab_J_Ve_J2, 0, TamTab, Tab_J_R),
-        write(Tab_J_R),
-        writeln('\nEsse é o tabuleiro que o Jogador 2 vai jogar: \n'),
-        preparaTabParaPrint(Tab_J_Ve_J1, 0, TamTab, Tab_B_R),
-        write(Tab_B_R),
-        write('Numero de navios restantes do jogador: '), write(NumNavios_J1), write('\n'),
-        write('Numero de navios restantes do bot: '), write(NumNavios_J1), write('\n\n'),
-    
-        write('\nVez do jogador 1...\n'),
-        disparaNoTabuleiroBot(Tab_Jog2, Tab_J_Ve_J2, TamTab, Tab_BF, Tab_J_Ve_BF),
-        write('\nVez do jogador 2...\n'),
-        sleep(0.9),
-        disparaNoTabuleiroBot(Tab_Jog1, Tab_J_Ve_J1, TamTab, Tab_JF, Tab_B_Ve_JF),
-    
-        iniciaJogoComJogadores(Tab_JF, Tab_J_Ve_BF, Tab_BF, Tab_B_Ve_JF, TamTab, Dados); 
-            
-        write('Você quer jogar novamente? [1 para sim, outro número para sair]'),
-        ler_opcao(Op),
-        (Op =:= 1 -> doWhile(true, Dados, TamTab); menu(Dados))  % VERIFICAR SE É NECESSARIO A VARIAVEL DADOS E O TRUE
-    ).    
-
-montaTabuleirosDeDoisJogadores(Tabuleiro_Jogador1, Tabuleiro_Jogador1_Ve_Jog2, Tabuleiro_Jogador2, Tabuleiro_Jogador2_Ve_Jog1, TamTab) :- 
-      montaTabuleiro('', Tabuleiro_Jogador1, TamTab),
-      montaTabuleiro('', Tabuleiro_Jogador1_Ve_Jog2, TamTab),
-      montaTabuleiro('', Tabuleiro_Jogador2, TamTab),
-      montaTabuleiro('', Tabuleiro_Jogador2_Ve_Jog1, TamTab).
-
-
-verificaFinalizacaoPartidaComJogadores(0, K, false):-
-	K \= 0,
-    writeln('Parabéns o jogador 2 ganhou!').
-
-verificaFinalizacaoPartidaComJogadores(_, 0, false):-
-    writeln('Parabéns o jogador 1 ganhou!').
-
-verificaFinalizacaoPartidaComJogadores(A, B, true):- A =\= 0, B =\= 0.
-
-% Função que exibe ranking
-lerArquivo(NomeArquivo) :-
-    open(NomeArquivo, read, Stream),
-    lerLinhas(Stream, Linhas),
-    close(Stream),
-    delete(Linhas, end_of_file, LinhasFiltradas),
-    montarRanking(LinhasFiltradas).
-
-lerLinhas(Stream, Linhas) :-
-    lerLinhasAux(Stream, [], Linhas).
-
-lerLinhasAux(Stream, LinhasTemp, Linhas) :-
-    at_end_of_stream(Stream),
-    reverse(LinhasTemp, Linhas),
-    !.
-
-lerLinhasAux(Stream, LinhasTemp, Linhas) :-
-    \+ at_end_of_stream(Stream),
-    lerLinha(Stream, Linha),
-    lerLinhasAux(Stream, [Linha|LinhasTemp], Linhas).
-
-lerLinha(Stream, Linha) :-
-    read(Stream, Linha).
-
-montarRanking(Linhas) :-
-    delete(Linhas, end_of_file, LinhasFiltradas),
-    sort(2, @>=, LinhasFiltradas, Ranking),
-    exibirRanking(Ranking).
-
-exibirRanking([]).
-exibirRanking([jogador(Nome, Pontos)|Resto]) :-
-    format('O jogador ~w possui ~w pontos~n', [Nome, Pontos]),
-    exibirRanking(Resto).
+%#         write('Você quer jogar novamente? [1 para sim, outro número para sair]'),
+%#         ler_opcao(Op),
+%#         (Op =:= 1 -> doWhile(true, Dados, TamTab); menu(Dados))  % VERIFICAR SE É NECESSARIO A VARIAVEL DADOS E O TRUE
+%#         ).
