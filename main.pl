@@ -1043,5 +1043,5 @@ montarRanking(Linhas) :-
 
 exibirRanking([]).
 exibirRanking([jogador(Nome, Pontos)|Resto]) :-
-    format('Jogador: ~w, Pontos: ~w~n', [Nome, Pontos]),
+    format('O jogador ~w possui ~w pontos~n', [Nome, Pontos]),
     exibirRanking(Resto).
