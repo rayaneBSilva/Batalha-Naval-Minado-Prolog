@@ -179,6 +179,8 @@ doWhile(true, Dados, TamTab):-
     shell(clear),
     montaTabuleiros(Tabuleiro_Jogador, Tabuleiro_Jogador_Ve_Bot, Tabuleiro_Bot, Tabuleiro_Bot_Ve_Jogador, TamTab),
     montaTabuleiroJogador(Tabuleiro_Jogador, TamTab, Tabuleiro_Jogador_Final),
+
+    jogaBombas(Tabuleiro_Jogador_Final, 5, TamTab, Tabuleiro_Jogador_Final_Com_Bombas), 
     
     shell(clear),
     writeln('Tabuleiro do Jogador: \n'),
@@ -187,6 +189,8 @@ doWhile(true, Dados, TamTab):-
     writeln('Tabuleiro do Bot: \n'),
     preparaTabParaPrint(Tabuleiro_Bot,0, TamTab, Tab_bot_R),
     write(Tab_bot_R),
+
+    jogaBombasBonus(Tabuleiro_Jogador_Final_Com_Bombas, 3, TamTab, _),
 
     iniciaJogoComMaquina(Tabuleiro_Jogador_Final, Tabuleiro_Jogador_Ve_Bot, Tabuleiro_Bot, Tabuleiro_Bot_Ve_Jogador, TamTab, Dados).
 
@@ -436,6 +440,7 @@ foiDisparadoNoBot(x, false).
 foiDisparadoNoBot(o, false).
 foiDisparadoNoBot(#, true).
 foiDisparadoNoBot(~, true).
+foiDisparadoNoBot(*, true). 
 foiDisparadoNoBot(E, R):- E \= x, E \= o, R = true.
 
 
@@ -456,6 +461,29 @@ posicionaSimboloNoNavio(Tab_B, Tab_J_Ve_B, X, Y, x, TamTab, Tab_Bot_Final, Tab_J
 posicionaSimboloNoNavio(Tab_B, Tab_J_Ve_B, X, Y, o, TamTab, Tab_B, Tab_J_Ve_Bot_Final):-
 	write('Voce acertou na agua!\n'),
 	posicionaSimbolo(Tab_J_Ve_B, X, Y, o, TamTab, Tab_J_Ve_Bot_Final).
+
+
+% ---------- bomba ----------
+
+selecionaSimboloBomba(Tab, X, Y, SimboloFinal):-
+    nth1(X, Tab, Linha),
+    nth1(Y, Linha, Simbolo),
+    simboloRetornadoBomba(Simbolo, SimboloFinal).
+
+simboloRetornadoBomba('*', '*').
+simboloRetornadoBomba(bomba, '*').
+simboloRetornadoBomba('#', '#').
+simboloRetornadoBomba(redemoinho, '#').
+simboloRetornadoBomba(E, R) :- E \= '*', E \= bomba, E \= '#', E \= redemoinho, R = E.
+
+% regra que adiciona o símbolo no tabuleiro indicando a presença ou não de uma bomba durante o jogo
+posicionaSimboloNaBomba(Tab_B, Tab_J_Ve_B, X, Y, Simbolo, TamTab, Tab_Bot_Final, Tab_J_Ve_Bot_Final):-
+    write('Você acertou uma bomba!\n'),
+    posicionaSimbolo(Tab_B, X, Y, Simbolo, TamTab, Tab_Bot_Final),
+    posicionaSimbolo(Tab_J_Ve_B, X, Y, Simbolo, TamTab, Tab_J_Ve_Bot_Final).
+
+% --------
+
 
 posicionaSimbolo(Tab, X, Y, Simbolo, TamTab, Tab_Final):-
 	X_Aux is X - 1,
@@ -936,6 +964,88 @@ imprimiListaComEspaco([H|T], StrInicio, R):-
     string_concat(R1, H, R2),
     string_concat(R2, "  ", StrAux),
     imprimiListaComEspaco(T, StrAux, R).
+
+
+% METODOS DAS BOMBAS  (em construcao)
+
+:- discontiguous jogaBombas/4.
+
+jogaBombas(Tab, 0, _, Tab).
+jogaBombas(Tab, QtdBombas, TamTabuleiro, Tab_Final) :-
+    QtdBombas > 0,
+    TamTabuleiro_1 is TamTabuleiro - 1,
+    random_between(0, TamTabuleiro_1, PosI),
+    random_between(0, TamTabuleiro_1, PosJ),
+    verificaPosicaoValida(Tab, PosI, PosJ),
+    adicionaBomba(Tab, PosI, PosJ, bomba, Tab_Nova),
+    QtdBombas_Nova is QtdBombas - 1,
+    jogaBombas(Tab_Nova, QtdBombas_Nova, TamTabuleiro, Tab_Final).
+
+adicionaBomba([H|T], 0, ValorY, Simbolo, [H_Novo|T]) :-
+    adicionaBombaLinha(H, ValorY, Simbolo, H_Novo).
+adicionaBomba([H|T], ValorX, ValorY, Simbolo, [H|T_Novo]) :-
+    ValorX > 0,
+    ValorX_Novo is ValorX - 1,
+    adicionaBomba(T, ValorX_Novo, ValorY, Simbolo, T_Novo).
+
+adicionaBombaLinha([_|T], 0, Simbolo, [Simbolo|T]).
+adicionaBombaLinha([X|T], ValorY, Simbolo, [X|T_Novo]) :-
+    ValorY > 0,
+    ValorY_Novo is ValorY - 1,
+    adicionaBombaLinha(T, ValorY_Novo, Simbolo, T_Novo).
+
+verificaPosicaoValida(Tab, PosI, PosJ) :-
+    length(Tab, Tam),
+    PosI >= 0,
+    PosI < Tam,
+    nth0(PosI, Tab, Linha),
+    length(Linha, Tam),
+    PosJ >= 0,
+    PosJ < Tam,
+    nth0(PosJ, Linha, Elemento),
+    not(member(Elemento, ['X', '*', bomba, '#', redemoinho])),
+    not(temBombaAdjacente(Tab, PosI, PosJ)).
+
+verificaTemElemento(Tabuleiro, PosI, PosJ) :-
+    nth0(PosI, Tabuleiro, Linha),
+    nth0(PosJ, Linha, Elemento),
+    member(Elemento, ['*', bomba, '#', redemoinho]).
+
+
+temBombaAdjacente(Tab, PosI, PosJ) :-
+    PosI_Cima is PosI - 1,
+    PosI_Cima >= 0,
+    verificaTemElemento(Tab, PosI_Cima, PosJ).
+temBombaAdjacente(Tab, PosI, PosJ) :-
+    PosJ_Esquerda is PosJ - 1,
+    PosJ_Esquerda >= 0,
+    verificaTemElemento(Tab, PosI, PosJ_Esquerda).
+temBombaAdjacente(Tab, PosI, PosJ) :-
+    length(Tab, Tam),
+    PosI_Baixo is PosI + 1,
+    PosI_Baixo < Tam,
+    verificaTemElemento(Tab, PosI_Baixo, PosJ).
+temBombaAdjacente(Tab, PosI, PosJ) :-
+    length(Tab, Tam),
+    length(Linha, Tam),
+    PosJ_Direita is PosJ + 1,
+    PosJ_Direita < Tam,
+    verificaTemElemento(Tab, PosI, PosJ_Direita).
+
+jogaBombasBonus(Tab, 0, _, Tab).
+jogaBombasBonus(Tab, QtdBombas, TamTabuleiro, Tab_Final) :-
+    QtdBombas > 0,
+    TamTabuleiro_1 is TamTabuleiro - 1,
+    random_between(0, TamTabuleiro_1, PosI),
+    random_between(0, TamTabuleiro_1, PosJ),
+    verificaPosicaoValida(Tab, PosI, PosJ),
+    adicionaBomba(Tab, PosI, PosJ, redemoinho, Tab_Nova),
+    QtdBombas_Nova is QtdBombas - 1,
+    jogaBombasBonus(Tab_Nova, QtdBombas_Nova, TamTabuleiro, Tab_Final).
+
+jogaBombas(Tab, QtdBombas, TamTabuleiro, Tab_Final) :-
+    jogaBombas(Tab, QtdBombas, TamTabuleiro, Tab_Intermediario),
+    jogaBombasBonus(Tab_Intermediario, QtdBombas, TamTabuleiro, Tab_Final).
 
 
 
