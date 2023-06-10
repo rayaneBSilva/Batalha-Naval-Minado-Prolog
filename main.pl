@@ -343,10 +343,20 @@ iniciaJogoComMaquina(Tab_J, Tab_J_Ve_B, Tab_B, Tab_B_Ve_J, TamTab, Dados):-
 	    write('Numero de navios restantes do bot: '), write(NumNavios_B), write('\n\n'),
         
         disparaNoTabuleiroBot(Tab_B, Tab_J_Ve_B, TamTab, Tab_BF, Tab_J_Ve_BF),
-        write('\nVez do bot...\n'),
-		sleep(0.9),
-		disparaNoTabuleiroJogador(Tab_J, Tab_B_Ve_J, TamTab, Tab_JF, Tab_B_Ve_JF),
-        iniciaJogoComMaquina(Tab_JF, Tab_J_Ve_BF, Tab_BF, Tab_B_Ve_JF, TamTab, Dados); 
+
+
+        contaNavios(Tab_J, NumNavios_J2),
+	    contaNavios(Tab_BF, NumNavios_B2),
+        verificaFinalizacaoPartida(NumNavios_J2, NumNavios_B2, Continue2),
+
+        (Continue2 -> 
+            write('\nVez do bot...\n'),
+		    sleep(0.9),
+		    disparaNoTabuleiroJogador(Tab_J, Tab_B_Ve_J, TamTab, Tab_JF, Tab_B_Ve_JF),
+            iniciaJogoComMaquina(Tab_JF, Tab_J_Ve_BF, Tab_BF, Tab_B_Ve_JF, TamTab, Dados); 
+            write('Você quer jogar novamente? [1 para sim, outro número para sair]'),
+            ler_opcao(Op),
+            (Op =:= 1 -> doWhile(true, Dados, TamTab); menu(Dados)));
         
         write('Você quer jogar novamente? [1 para sim, outro número para sair]'),
         ler_opcao(Op),
@@ -740,12 +750,19 @@ iniciaJogoComJogadores(Tab_Jog1, Tab_J_Ve_J2, Tab_Jog2, Tab_J_Ve_J1, TamTab, Dad
     
         write('\nVez do jogador 1...\n'),
         disparaNoTabuleiroBot(Tab_Jog2, Tab_J_Ve_J2, TamTab, Tab_BF, Tab_J_Ve_BF),
-        write('\nVez do jogador 2...\n'),
-        sleep(0.9),
-        disparaNoTabuleiroBot(Tab_Jog1, Tab_J_Ve_J1, TamTab, Tab_JF, Tab_B_Ve_JF),
-    
-        iniciaJogoComJogadores(Tab_JF, Tab_J_Ve_BF, Tab_BF, Tab_B_Ve_JF, TamTab, Dados, NovosDados); 
-            
+
+        contaNavios(Tab_Jog1, NumNavios_J1_2),
+        contaNavios(Tab_BF, NumNavios_J2_2),
+        verificaFinalizacaoPartidaComJogadores(NumNavios_J1_2, NumNavios_J2_2, Continue2),
+        (Continue2 -> 
+            write('\nVez do jogador 2...\n'),
+            sleep(0.9),
+            disparaNoTabuleiroBot(Tab_Jog1, Tab_J_Ve_J1, TamTab, Tab_JF, Tab_B_Ve_JF),
+            iniciaJogoComJogadores(Tab_JF, Tab_J_Ve_BF, Tab_BF, Tab_B_Ve_JF, TamTab, Dados, NovosDados); 
+            write('Você quer jogar novamente? [1 para sim, outro número para sair]'),
+            ler_opcao(Op),
+            (Op =:= 1 -> doWhile(true, Dados, TamTab); menu(Dados))
+        );
         write('Você quer jogar novamente? [1 para sim, outro número para sair]'),
         ler_opcao(Op),
         (Op =:= 1 -> doWhile(true, Dados, TamTab); menu(Dados))  % VERIFICAR SE É NECESSARIO A VARIAVEL DADOS E O TRUE
