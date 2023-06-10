@@ -56,6 +56,15 @@ executarOpcao(Dados, 1) :-
 executarOpcao(Dados, 2) :-
     prepararJogo(Dados, 10).
 
+executarOpcao(Dados,3) :-
+    shell(clear),
+    writeln("-------------- RANKING DOS JOGADORES -----------"),
+    lerArquivo('dados.txt'),
+    writeln("Pressione qualquer número para voltar ao menu."),
+    read(_),
+    menu(Dados).
+
+
 executarOpcao(Dados, 4) :-
     exibirConteudoArquivoLentamente('historia.txt'),
     writeln("Pressione qualquer número para voltar ao menu."),
@@ -1002,3 +1011,37 @@ verificaFinalizacaoPartidaComJogadores(_, 0, false):-
     writeln('Parabéns o jogador 1 ganhou!').
 
 verificaFinalizacaoPartidaComJogadores(A, B, true):- A =\= 0, B =\= 0.
+
+% Função que exibe ranking
+lerArquivo(NomeArquivo) :-
+    open(NomeArquivo, read, Stream),
+    lerLinhas(Stream, Linhas),
+    close(Stream),
+    delete(Linhas, end_of_file, LinhasFiltradas),
+    montarRanking(LinhasFiltradas).
+
+lerLinhas(Stream, Linhas) :-
+    lerLinhasAux(Stream, [], Linhas).
+
+lerLinhasAux(Stream, LinhasTemp, Linhas) :-
+    at_end_of_stream(Stream),
+    reverse(LinhasTemp, Linhas),
+    !.
+
+lerLinhasAux(Stream, LinhasTemp, Linhas) :-
+    \+ at_end_of_stream(Stream),
+    lerLinha(Stream, Linha),
+    lerLinhasAux(Stream, [Linha|LinhasTemp], Linhas).
+
+lerLinha(Stream, Linha) :-
+    read(Stream, Linha).
+
+montarRanking(Linhas) :-
+    delete(Linhas, end_of_file, LinhasFiltradas),
+    sort(2, @>=, LinhasFiltradas, Ranking),
+    exibirRanking(Ranking).
+
+exibirRanking([]).
+exibirRanking([jogador(Nome, Pontos)|Resto]) :-
+    format('Jogador: ~w, Pontos: ~w~n', [Nome, Pontos]),
+    exibirRanking(Resto).
