@@ -2,6 +2,8 @@
 :- dynamic jogador/2. % dynamic para permitir a modificação em tempo de execução
 :- dynamic tabuleiro/1.
 
+:- use_module(library(string)).
+
 % função que inicia o programa
 main :-
     exibirConteudoArquivo('introducao.txt'),
@@ -85,6 +87,7 @@ cadastrarJogador(Dados, NovosDados) :-
     ).
 
 
+
 existeJogador(Arquivo, Nome) :-
     open(Arquivo, read, Stream), 
     existeJogadorAux(Stream, Nome),  
@@ -143,7 +146,7 @@ executarOpcaoJogo(Dados, 1, TamTab) :-
    doWhile(true, Dados, TamTab).
 
 executarOpcaoJogo(Dados, 2, TamTab) :-
-    prepararJogo(Dados, TamTab).
+    doWhileJogoCom2(true, Dados, TamTab, DadosAtualizado).
 
 executarOpcaoJogo(Dados, 3, _) :-
     pegaTamanhoTabuleiro(3, TamTab),
@@ -672,10 +675,12 @@ preparaTabParaPrint(Tab, 0, TamTab, R):-
 preparaTabParaPrint([H|_], TamTab, TamTab, R):-
 	imprimiListaComEspaco(H, "", H2),
 	insereEspacos([H2], " ", K),
-    string_concat(TamTab, " ", R1),
+    (TamTab < 10 -> 
+        string_concat(" ", TamTab, RAux),
+        string_concat(RAux, " ", R1);
+        string_concat(TamTab, " ", R1)),
 	string_concat(R1, K, R2),
 	string_concat(R2, "\n", R).
-
 
 preparaTabParaPrint([H|T], I, TamTab, R):-
 	I < TamTab, I >= 10, 
@@ -742,3 +747,258 @@ imprimiListaComEspaco([H|T], StrInicio, R):-
     string_concat(R1, H, R2),
     string_concat(R2, "  ", StrAux),
     imprimiListaComEspaco(T, StrAux, R).
+
+
+% -------------------------
+
+
+
+
+
+# % Predicado principal que executa o loop do jogo
+# doWhileJogoCom2(Condition, Dados, TamTabuleiro, NovosDados) :-
+
+
+#          %   jogaBombas(NovoTabuleiro_Jogador1, round(TamTabuleiro / 5), TamTabuleiro, Tabuleiro_Jogador1_Final),
+#          %   jogaBombas(NovoTabuleiro_Jogador2, round(TamTabuleiro / 5), TamTabuleiro, Tabuleiro_Jogador2_Final),
+#          %   jogaBombasBonus(Tabuleiro_Jogador1_Final, round(TamTabuleiro / 5), TamTabuleiro, Tabuleiro_Jogador1_Final_Final),
+#          %   jogaBombasBonus(Tabuleiro_Jogador2_Final, round(TamTabuleiro / 5), TamTabuleiro, Tabuleiro_Jogador2_Final_Final),
+            
+#             iniciaJogoComJogadores(Tabuleiro_Jogador1_Final, Tabuleiro_Jogador1_Ve_Jog2, Tabuleiro_Jogador2_Final, Tabuleiro_Jogador2_Ve_Jog1, TamTabuleiro, Dados).
+#   ;
+#     menu(Dados, NovosDados)
+#   ).
+
+
+
+
+
+
+
+# % Predicado para jogar bombas aleatoriamente no tabuleiro
+# #jogaBombas(Tab, 0, _, Tab).
+# jogaBombas(Tab, QtdBombas, TamTabuleiro, TabFinal) :-
+#   random(0, TamTabuleiro, PosI),
+#   random(0, TamTabuleiro, PosJ),
+#   (
+#     verificaPosicaoValida(Tab, PosI, PosJ) ->
+#       adicionaBomba(Tab, PosI, PosJ, 'X', TabFinalTemp),
+#       QtdBombasRestantes is QtdBombas - 1,
+#       jogaBombas(TabFinalTemp, QtdBombasRestantes, TamTabuleiro, TabFinal)
+#     ;
+#       jogaBombas(Tab, QtdBombas, TamTabuleiro, TabFinal)
+#   ).
+
+# % Predicado para adicionar uma bomba no tabuleiro
+# adicionaBomba([], _, _, _, []).
+# adicionaBomba([H|T], ValorX, ValorY, Simbolo, [HFinal|TFinal]) :-
+#   (
+#     ValorX = 0 ->
+#       string_chars(H, HChars),
+#       replace_element_at_index(HChars, ValorY, Simbolo, HFinalChars),
+#       string_chars(HFinal, HFinalChars)
+#     ;
+#       HFinal = H
+#   ),
+#   ValorXTemp is ValorX - 1,
+#   adicionaBomba(T, ValorXTemp, ValorY, Simbolo, TFinal).
+
+# % Predicado para verificar se há uma bomba adjacente a uma posição
+# temBombaAdjacente(Tab, PosI, PosJ) :-
+#   (
+#     PosITemp is PosI - 1,
+#     PosITemp >= 0,
+#     verificaTemElemento(Tab, PosITemp, PosJ)
+#   ) ;
+#   (
+#     PosJTemp is PosJ - 1,
+#     PosJTemp >= 0,
+#     verificaTemElemento(Tab, PosI, PosJTemp)
+#   ) ;
+#   (
+#     PosI < length(Tab),
+#     verificaTemElemento(Tab, PosI, PosJ)
+#   ) ;
+#   (
+#     PosJ < length(H),
+#     verificaTemElemento(Tab, PosI, PosJ)
+#   ).
+
+# % Predicado para jogar bombas bônus no tabuleiro
+# jogaBombasBonus(Tab, 0, _, Tab).
+# jogaBombasBonus(Tab, QtdBombas, TamTabuleiro, TabFinal) :-
+#   random(0, TamTabuleiro, PosI),
+#   random(0, TamTabuleiro, PosJ),
+#   writeln(PosI),
+#   writeln(PosJ),
+#   (
+#     verificaPosicaoValida(Tab, PosI, PosJ) ->
+#       adicionaBomba(Tab, PosI, PosJ, 'B', TabFinalTemp),
+#       QtdBombasRestantes is QtdBombas - 1,
+#       jogaBombasBonus(TabFinalTemp, QtdBombasRestantes, TamTabuleiro, TabFinal)
+#     ;
+#       jogaBombasBonus(Tab, QtdBombas, TamTabuleiro, TabFinal)
+#   ).
+
+
+# iniciaJogoComJogadores (Tab_Jog1, Tab_J_Ve_J2, Tab_Jog2, Tab_J_Ve_J1, TamTab, Dados) :-
+#   contaNavios(Tab_Jog1, NumNavios_J1),
+# 	contaNavios(Tab_Jog2, NumNavios_J2),
+
+# 	verificaFinalizacaoPartida(NumNavios_J1, NumNavios_J2, Continue),
+
+#     (Continue -> 
+#         shell(clear),
+#         writeln('Esse é o tabuleiro que o Jogador 1 vai jogar: \n'), % Mudar Frase
+#         preparaTabParaPrint(Tab_J_Ve_J2, 0, TamTab, Tab_J_R),
+#         write(Tab_J_R),
+#         writeln('\nEsse é o tabuleiro que o Jogador 2 vai jogar: \n'),
+#         preparaTabParaPrint(Tab_J_Ve_J1, 0, TamTab, Tab_B_R),
+#         write(Tab_B_R),
+#         write('Numero de navios restantes do jogador: '), write(NumNavios_J1), write('\n'),
+# 	      write('Numero de navios restantes do bot: '), write(NumNavios_J1), write('\n\n'),
+
+#         write('\nVez do jogador 1...\n'),
+#         disparaNoTabuleiroBot(Tab_Jog2, Tab_J_Ve_J2, TamTab, Tab_BF, Tab_J_Ve_BF),
+#         write('\nVez do bot...\n'),
+# 		    sleep(0.9),
+#         disparaNoTabuleiroBot(Tab_Jog1, Tab_J_Ve_J1, TamTab, Tab_JF, Tab_B_Ve_JF),
+
+#         iniciaJogoComJogadores(Tab_JF, Tab_J_Ve_BF, Tab_BF, Tab_B_Ve_JF, TamTab, Dados); 
+        
+#         write('Você quer jogar novamente? [1 para sim, outro número para sair]'),
+#         ler_opcao(Op),
+#         (Op =:= 1 -> doWhile(true, Dados, TamTab); menu(Dados))  % VERIFICAR SE É NECESSARIO A VARIAVEL DADOS E O TRUE
+#         ).
+
+
+
+% -------------------
+doWhileJogoCom2(true, Dados, TamTab, NovosDados) :-
+    shell('clear'),
+    chamaJogador(Dados, '', "1", Jogador1),
+    chamaJogador(Dados, Jogador1, "2", Jogador2),
+    
+    (
+        (Jogador1 = "JogadorNaoExiste"; Jogador2 = "JogadorNaoExiste") ->
+        doWhileJogoCom2(true, Dados, TamTab, NovosDados)
+        ;
+        (
+            shell('clear'),
+            montaTabuleirosDeDoisJogadores(Tabuleiro_Jogador1, Tabuleiro_Jogador1_Ve_Jog2, Tabuleiro_Jogador2, Tabuleiro_Jogador2_Ve_Jog1, TamTab),
+            montaTabuleiroJogador(Tabuleiro_Jogador1, TamTab, Tabuleiro_Jogador1_Final),
+            montaTabuleiroJogador(Tabuleiro_Jogador2, TamTab, Tabuleiro_Jogador2_Final),
+            
+            shell('clear'),
+            writeln('Tabuleiro do Jogador 1: \n'),
+            preparaTabParaPrint(Tabuleiro_Jogador1_Final, 0, TamTab, Tab_R),
+            write(Tab_R),
+            writeln('Tabuleiro do Jogador 2: \n'),
+            preparaTabParaPrint(Tabuleiro_Jogador2_Final, 0, TamTab, Tab_R2),
+            write(Tab_R2),
+            
+            iniciaJogoComJogadores(Tabuleiro_Jogador1_Final, Tabuleiro_Jogador1_Ve_Jog2, Tabuleiro_Jogador2_Final, Tabuleiro_Jogador2_Ve_Jog1, TamTab, Dados, NovosDados)
+        )
+    ).
+
+chamaJogador(Dados, NomeJogador, JogadorNum, JogadorEscolhido) :-
+    (
+        JogadorNum = "0", Mensagem = "Você deseja jogar com um jogador já cadastrado? (Digite S para sim e N para não)";
+        JogadorNum = "1", Mensagem = "Você deseja jogar com o primeiro jogador já cadastrado? (Digite S para sim e N para não)";
+        JogadorNum = "2", Mensagem = "Você deseja jogar com o segundo jogador já cadastrado? (Digite S para sim e N para não)";
+        Mensagem = "Opção inválida"
+    ),
+    writeln(Mensagem),
+    writeln("\n→ Opção:"),
+    read(Op),
+    (
+        Op = 'S' ->
+        (
+            JogadorNum = "1" ->
+            (
+                writeln("\nDigite o nome do primeiro jogador:"),
+                read(Nome1),
+                (
+                    existeJogador('dados.txt', Nome1) ->
+                    JogadorEscolhido = Nome1
+                    ;
+                    writeln("\nEsse jogador não existe."),
+                    sleep(1),
+                    chamaJogador(Dados, NomeJogador, JogadorNum, JogadorEscolhido)
+                )
+            )
+            ;
+            JogadorNum = "2" ->
+            (
+                writeln("\nDigite o nome do segundo jogador:"),
+                read(Nome2),
+                (
+                    existeJogador('dados.txt', Nome2) ->
+                    JogadorEscolhido = Nome2
+                    ;
+                    writeln("\nEsse jogador não existe."),
+                    sleep(1),
+                    chamaJogador(Dados, NomeJogador, JogadorNum, JogadorEscolhido)
+                )
+            )
+        )
+        ;
+        Op = 'N' ->
+        read(Nome),
+        JogadorEscolhido = Nome
+        ;
+        writeln("\nOpção Inválida"),
+        sleep(1),
+        chamaJogador(Dados, NomeJogador, JogadorNum, JogadorEscolhido)
+    ).
+
+
+existeJogador(Dados, Nome) :-
+    member(jogador(Nome, _), Dados).
+    
+    
+iniciaJogoComJogadores(Tab_Jog1, Tab_J_Ve_J2, Tab_Jog2, Tab_J_Ve_J1, TamTab, Dados) :-
+    contaNavios(Tab_Jog1, NumNavios_J1),
+    contaNavios(Tab_Jog2, NumNavios_J2),
+    
+    verificaFinalizacaoPartidaComJogadores(NumNavios_J1, NumNavios_J2, Continue),
+    
+    (Continue -> 
+        shell(clear),
+        writeln('Esse é o tabuleiro que o Jogador 1 vai jogar: \n'), % Mudar Frase
+        preparaTabParaPrint(Tab_J_Ve_J2, 0, TamTab, Tab_J_R),
+        write(Tab_J_R),
+        writeln('\nEsse é o tabuleiro que o Jogador 2 vai jogar: \n'),
+        preparaTabParaPrint(Tab_J_Ve_J1, 0, TamTab, Tab_B_R),
+        write(Tab_B_R),
+        write('Numero de navios restantes do jogador: '), write(NumNavios_J1), write('\n'),
+        write('Numero de navios restantes do bot: '), write(NumNavios_J1), write('\n\n'),
+    
+        write('\nVez do jogador 1...\n'),
+        disparaNoTabuleiroBot(Tab_Jog2, Tab_J_Ve_J2, TamTab, Tab_BF, Tab_J_Ve_BF),
+        write('\nVez do jogador 2...\n'),
+        sleep(0.9),
+        disparaNoTabuleiroBot(Tab_Jog1, Tab_J_Ve_J1, TamTab, Tab_JF, Tab_B_Ve_JF),
+    
+        iniciaJogoComJogadores(Tab_JF, Tab_J_Ve_BF, Tab_BF, Tab_B_Ve_JF, TamTab, Dados); 
+            
+        write('Você quer jogar novamente? [1 para sim, outro número para sair]'),
+        ler_opcao(Op),
+        (Op =:= 1 -> doWhile(true, Dados, TamTab); menu(Dados))  % VERIFICAR SE É NECESSARIO A VARIAVEL DADOS E O TRUE
+    ).    
+
+montaTabuleirosDeDoisJogadores(Tabuleiro_Jogador1, Tabuleiro_Jogador1_Ve_Jog2, Tabuleiro_Jogador2, Tabuleiro_Jogador2_Ve_Jog1, TamTab) :- 
+      montaTabuleiro('', Tabuleiro_Jogador1, TamTab),
+      montaTabuleiro('', Tabuleiro_Jogador1_Ve_Jog2, TamTab),
+      montaTabuleiro('', Tabuleiro_Jogador2, TamTab),
+      montaTabuleiro('', Tabuleiro_Jogador2_Ve_Jog1, TamTab).
+
+
+verificaFinalizacaoPartidaComJogadores(0, K, false):-
+	K \= 0,
+    writeln('Parabéns o jogador 2 ganhou!').
+
+verificaFinalizacaoPartidaComJogadores(_, 0, false):-
+    writeln('Parabéns o jogador 1 ganhou!').
+
+verificaFinalizacaoPartidaComJogadores(A, B, true):- A =\= 0, B =\= 0.
