@@ -179,8 +179,6 @@ doWhile(true, Dados, TamTab):-
     shell(clear),
     montaTabuleiros(Tabuleiro_Jogador, Tabuleiro_Jogador_Ve_Bot, Tabuleiro_Bot, Tabuleiro_Bot_Ve_Jogador, TamTab),
     montaTabuleiroJogador(Tabuleiro_Jogador, TamTab, Tabuleiro_Jogador_Final),
-
-    jogaBombas(Tabuleiro_Jogador_Final, 5, TamTab, Tabuleiro_Jogador_Final_Com_Bombas), 
     
     shell(clear),
     writeln('Tabuleiro do Jogador: \n'),
@@ -189,8 +187,6 @@ doWhile(true, Dados, TamTab):-
     writeln('Tabuleiro do Bot: \n'),
     preparaTabParaPrint(Tabuleiro_Bot,0, TamTab, Tab_bot_R),
     write(Tab_bot_R),
-
-    jogaBombasBonus(Tabuleiro_Jogador_Final_Com_Bombas, 3, TamTab, _),
 
     iniciaJogoComMaquina(Tabuleiro_Jogador_Final, Tabuleiro_Jogador_Ve_Bot, Tabuleiro_Bot, Tabuleiro_Bot_Ve_Jogador, TamTab, Dados).
 
@@ -254,10 +250,11 @@ montaTabuleiro('', Tabuleiro_Jogador, TamTab):-
 	montaMatriz(_, 0, Tabuleiro_Jogador, TamTab).
 
 % regra que irá chamar a relação de montar matriz do tabuleiro do bot
-montaTabuleiro('B', Tabuleiro_Bot, TamTab):-
+montaTabuleiro('B', Tabuleiro_Bot_Bombas, TamTab):-
 	montaMatriz(_, 0, Tab, TamTab),
     Quantidade_de_navios is (TamTab // 2),
-    montaTabuleiroBotInteiro(Tab, Tabuleiro_Bot, Quantidade_de_navios, TamTab). 
+    montaTabuleiroBotInteiro(Tab, Tabuleiro_Bot, Quantidade_de_navios, TamTab),
+    jogaBombas(Tabuleiro_Bot, TamTab // 5, TamTab, Tabuleiro_Bot_Bombas). 
 
 % regra que irá montar a matriz
 montaMatriz(R, TamTab, R, TamTab).
@@ -337,7 +334,7 @@ iniciaJogoComMaquina(Tab_J, Tab_J_Ve_B, Tab_B, Tab_B_Ve_J, TamTab, Dados):-
 
     (Continue -> 
         shell(clear),
-        writeln('Esse é o tabuleiro que o Jogador vai jogar: \n'), % Mudar Frase
+        writeln('Esse é o tabuleiro que o Jogador vai jogar: \n'), 
         preparaTabParaPrint(Tab_J_Ve_B, 0, TamTab, Tab_J_R),
         write(Tab_J_R),
         writeln('\nEsse é o tabuleiro que o Bot vai jogar: \n'),
@@ -346,25 +343,24 @@ iniciaJogoComMaquina(Tab_J, Tab_J_Ve_B, Tab_B, Tab_B_Ve_J, TamTab, Dados):-
         write('Numero de navios restantes do jogador: '), write(NumNavios_J), write('\n'),
 	    write('Numero de navios restantes do bot: '), write(NumNavios_B), write('\n\n'),
         
-        disparaNoTabuleiroBot(Tab_B, Tab_J_Ve_B, TamTab, Tab_BF, Tab_J_Ve_BF),
+        disparaNoTabuleiroBot(Tab_B, Tab_J_Ve_B, Tab_J, Tab_B_Ve_J, TamTab, Tab_BF, Tab_J_Ve_BF, Tab_J_Final, Tab_B_Ve_J_Final),
 
-
-        contaNavios(Tab_J, NumNavios_J2),
+        contaNavios(Tab_J_Final, NumNavios_J2),
 	    contaNavios(Tab_BF, NumNavios_B2),
         verificaFinalizacaoPartida(NumNavios_J2, NumNavios_B2, Continue2),
-
+        
         (Continue2 -> 
             write('\nVez do bot...\n'),
 		    sleep(0.9),
-		    disparaNoTabuleiroJogador(Tab_J, Tab_B_Ve_J, TamTab, Tab_JF, Tab_B_Ve_JF),
-            iniciaJogoComMaquina(Tab_JF, Tab_J_Ve_BF, Tab_BF, Tab_B_Ve_JF, TamTab, Dados); 
+		    disparaNoTabuleiroJogador(Tab_J_Final, Tab_B_Ve_J_Final, Tab_BF, Tab_J_Ve_BF, TamTab, Tab_JF, Tab_B_Ve_JF, Tab_BF2, Tab_J_Ve_BF2),
+            iniciaJogoComMaquina(Tab_JF, Tab_J_Ve_BF2, Tab_BF2, Tab_B_Ve_JF, TamTab, Dados); 
             write('Você quer jogar novamente? [1 para sim, outro número para sair]'),
             ler_opcao(Op),
             (Op =:= 1 -> doWhile(true, Dados, TamTab); menu(Dados)));
         
         write('Você quer jogar novamente? [1 para sim, outro número para sair]'),
         ler_opcao(Op),
-        (Op =:= 1 -> doWhile(true, Dados, TamTab); menu(Dados))  % VERIFICAR SE É NECESSARIO A VARIAVEL DADOS E O TRUE
+        (Op =:= 1 -> doWhile(true, Dados, TamTab); menu(Dados))
         ).
 
 
@@ -379,6 +375,7 @@ contaNavios([H|T], NumNaviosFinal):-
 contaNaviosLinha([~|[]], 0).
 contaNaviosLinha([x|[]], 0).
 contaNaviosLinha([o|[]], 0).
+contaNaviosLinha(['B'|[]], 0).
 contaNaviosLinha([#|[]], 1).
 contaNaviosLinha([~|T], NumNaviosFinal):-
 	contaNaviosLinha(T, NumNavios),
@@ -387,6 +384,9 @@ contaNaviosLinha([x|T], NumNaviosFinal):-
 	contaNaviosLinha(T, NumNavios),
 	NumNaviosFinal is 0 + NumNavios.
 contaNaviosLinha([o|T], NumNaviosFinal):-
+	contaNaviosLinha(T, NumNavios),
+	NumNaviosFinal is 0 + NumNavios.
+contaNaviosLinha(['B'|T], NumNaviosFinal):-
 	contaNaviosLinha(T, NumNavios),
 	NumNaviosFinal is 0 + NumNavios.
 contaNaviosLinha([#|T], NumNaviosFinal):-
@@ -407,7 +407,7 @@ verificaFinalizacaoPartida(A, B, true):- A =\= 0, B =\= 0.
 
 
 % regra de "ataque" no tabuleiro (bot)
-disparaNoTabuleiroBot(Tab_B, Tab_J_Ve_B, TamTab, Tab_Bot_Final, Tab_Jogador_Ve_Bot_Final):-
+disparaNoTabuleiroBot(Tab_B, Tab_J_Ve_B, Tab_J, Tab_B_Ve_J, TamTab, Tab_Bot_Final, Tab_Jogador_Ve_Bot_Final, Tab_J_Final, Tab_B_Ve_J_Final):-
     write('Sua vez de disparar.\n'),
     write('Insira as posicoes X de 1 a '), write(TamTab), write(' e Y de 1 a '), write(TamTab), write('\n'),
 
@@ -420,13 +420,12 @@ disparaNoTabuleiroBot(Tab_B, Tab_J_Ve_B, TamTab, Tab_Bot_Final, Tab_Jogador_Ve_B
 	verificaEntrada(Y, TamTab, R2),
 
 	verificaSeJaFoiDisparadoNoBot(Tab_J_Ve_B, X, Y, Resul),
-
 	(R1, R2, Resul) -> (
 		selecionaSimboloNavio(Tab_B, X, Y, Simbolo),
-		posicionaSimboloNoNavio(Tab_B, Tab_J_Ve_B, X, Y, Simbolo, TamTab, Tab_Bot_Final, Tab_Jogador_Ve_Bot_Final)
+		posicionaSimboloNoNavio(Tab_B, Tab_J_Ve_B, Tab_J, Tab_B_Ve_J, X, Y, Simbolo, TamTab, Tab_Bot_Final, Tab_Jogador_Ve_Bot_Final, Tab_J_Final, Tab_B_Ve_J_Final)
 	);
 	write('Posicao invalida, digite uma nova posicao valida.\n'),
-	disparaNoTabuleiroBot(Tab_B, Tab_J_Ve_B, TamTab, Tab_Bot_Final, Tab_Jogador_Ve_Bot_Final).
+	disparaNoTabuleiroBot(Tab_B, Tab_J_Ve_B, Tab_J, Tab_B_Ve_J, TamTab, Tab_Bot_Final, Tab_Jogador_Ve_Bot_Final, Tab_J_Final, Tab_B_Ve_J_Final).
 
 
 % regra que verifica se uma determinada posição já foi usada pelo usuario
@@ -440,7 +439,7 @@ foiDisparadoNoBot(x, false).
 foiDisparadoNoBot(o, false).
 foiDisparadoNoBot(#, true).
 foiDisparadoNoBot(~, true).
-foiDisparadoNoBot(*, true). 
+foiDisparadoNoBot('B', true).
 foiDisparadoNoBot(E, R):- E \= x, E \= o, R = true.
 
 
@@ -451,39 +450,22 @@ selecionaSimboloNavio(Tab, X, Y, SimboloFinal):-
 
 simboloRetornado(#, x).
 simboloRetornado(~, o).
+simboloRetornado('B', 'B').
 
 % regra que adiciona o simbolo no tabuleiro que indica que achou ou não um navio durante o jogo
-posicionaSimboloNoNavio(Tab_B, Tab_J_Ve_B, X, Y, x, TamTab, Tab_Bot_Final, Tab_J_Ve_Bot_Final):-
+posicionaSimboloNoNavio(Tab_B, Tab_J_Ve_B, Tab_J, Tab_B_Ve_J, X, Y, x, TamTab, Tab_Bot_Final, Tab_J_Ve_Bot_Final, Tab_J, Tab_B_Ve_J):-
 	write('Voce acertou um navio!\n'),
 	posicionaSimbolo(Tab_B, X, Y, x, TamTab, Tab_Bot_Final),
 	posicionaSimbolo(Tab_J_Ve_B, X, Y, x, TamTab, Tab_J_Ve_Bot_Final).
 
-posicionaSimboloNoNavio(Tab_B, Tab_J_Ve_B, X, Y, o, TamTab, Tab_B, Tab_J_Ve_Bot_Final):-
+posicionaSimboloNoNavio(Tab_B, Tab_J_Ve_B, Tab_J, Tab_B_Ve_J, X, Y, o, TamTab, Tab_B, Tab_J_Ve_Bot_Final, Tab_J, Tab_B_Ve_J):-
 	write('Voce acertou na agua!\n'),
 	posicionaSimbolo(Tab_J_Ve_B, X, Y, o, TamTab, Tab_J_Ve_Bot_Final).
 
-
-% ---------- bomba ----------
-
-selecionaSimboloBomba(Tab, X, Y, SimboloFinal):-
-    nth1(X, Tab, Linha),
-    nth1(Y, Linha, Simbolo),
-    simboloRetornadoBomba(Simbolo, SimboloFinal).
-
-simboloRetornadoBomba('*', '*').
-simboloRetornadoBomba(bomba, '*').
-simboloRetornadoBomba('#', '#').
-simboloRetornadoBomba(redemoinho, '#').
-simboloRetornadoBomba(E, R) :- E \= '*', E \= bomba, E \= '#', E \= redemoinho, R = E.
-
-% regra que adiciona o símbolo no tabuleiro indicando a presença ou não de uma bomba durante o jogo
-posicionaSimboloNaBomba(Tab_B, Tab_J_Ve_B, X, Y, Simbolo, TamTab, Tab_Bot_Final, Tab_J_Ve_Bot_Final):-
-    write('Você acertou uma bomba!\n'),
-    posicionaSimbolo(Tab_B, X, Y, Simbolo, TamTab, Tab_Bot_Final),
-    posicionaSimbolo(Tab_J_Ve_B, X, Y, Simbolo, TamTab, Tab_J_Ve_Bot_Final).
-
-% --------
-
+posicionaSimboloNoNavio(Tab_B, Tab_J_Ve_B, Tab_J, Tab_B_Ve_J, X, Y, 'B', TamTab, Tab_B2, Tab_J_Ve_Bot_Final2, Tab_J_Final, Tab_B_Ve_J_Final):-
+	write('Voce acertou uma bomba!\n'),
+	posicionaSimbolo(Tab_J_Ve_B, X, Y, 'B', TamTab, Tab_J_Ve_Bot_Final),
+    disparaNoTabuleiroJogadorAcertandoNavio(Tab_J, Tab_B_Ve_J, Tab_B, Tab_J_Ve_Bot_Final, TamTab, Tab_J_Final, Tab_B_Ve_J_Final, Tab_B2, Tab_J_Ve_Bot_Final2).
 
 posicionaSimbolo(Tab, X, Y, Simbolo, TamTab, Tab_Final):-
 	X_Aux is X - 1,
@@ -524,7 +506,7 @@ montaListaComSimbolo(Lista, I, TamTab, MinI, MaxI, ListaSaida, Elemento, Boolean
 
 
 % regra de "ataque" no tabuleiro (jogadores)
-disparaNoTabuleiroJogador(Tab_J, Tab_B_Ve_J, TamTab, Tab_JF, Tab_B_Ve_JF):-
+disparaNoTabuleiroJogador(Tab_J, Tab_B_Ve_J, Tab_BF, Tab_J_Ve_BF, TamTab, Tab_JF, Tab_B_Ve_JF, Tab_BF2, Tab_J_Ve_BF2):-
     Tamanho is TamTab + 1,
 	random(1, Tamanho, X),
 	random(1, Tamanho, Y),
@@ -533,10 +515,29 @@ disparaNoTabuleiroJogador(Tab_J, Tab_B_Ve_J, TamTab, Tab_JF, Tab_B_Ve_JF):-
 
 	Resposta -> (
 		selecionaSimboloNavio(Tab_J, X, Y, Simbolo),
-		posicionaSimboloNoNavio(Tab_J, Tab_B_Ve_J, X, Y, Simbolo, TamTab, Tab_JF, Tab_B_Ve_JF)
+		posicionaSimboloNoNavio(Tab_J, Tab_B_Ve_J, Tab_BF, Tab_J_Ve_BF, X, Y, Simbolo, TamTab, Tab_JF, Tab_B_Ve_JF, Tab_BF2, Tab_J_Ve_BF2)
 	);
-	disparaNoTabuleiroJogador(Tab_J, Tab_B_Ve_J, TamTab, Tab_JF, Tab_B_Ve_JF).
+	disparaNoTabuleiroJogador(Tab_J, Tab_B_Ve_J, Tab_BF, Tab_J_Ve_BF, TamTab, Tab_JF, Tab_B_Ve_JF, Tab_BF2, Tab_J_Ve_BF2).
 
+
+% regra de "ataque" no tabuleiro (jogadores)
+disparaNoTabuleiroJogadorAcertandoNavio(Tab_J, Tab_B_Ve_J, Tab_BF, Tab_J_Ve_BF, TamTab, Tab_JF, Tab_B_Ve_JF, Tab_BF2, Tab_J_Ve_BF2):-
+    Tamanho is TamTab + 1,
+	random(1, Tamanho, X),
+	random(1, Tamanho, Y),
+
+	verificaJaDisparadoAoJogador(Tab_B_Ve_J, X, Y, Tamanho, Resposta),
+
+	Resposta -> (
+		selecionaSimboloNavio(Tab_J, X, Y, Simbolo),
+        verificaSimboloNavio(Simbolo, EhSimbolo),
+        (EhSimbolo -> posicionaSimboloNoNavio(Tab_J, Tab_B_Ve_J, Tab_BF, Tab_J_Ve_BF, X, Y, Simbolo, TamTab, Tab_JF, Tab_B_Ve_JF, Tab_BF2, Tab_J_Ve_BF2);
+    disparaNoTabuleiroJogadorAcertandoNavio(Tab_J, Tab_B_Ve_J, Tab_BF, Tab_J_Ve_BF, TamTab, Tab_JF, Tab_B_Ve_JF, Tab_BF2, Tab_J_Ve_BF2))
+	);
+	disparaNoTabuleiroJogadorAcertandoNavio(Tab_J, Tab_B_Ve_J, Tab_BF, Tab_J_Ve_BF, TamTab, Tab_JF, Tab_B_Ve_JF, Tab_BF2, Tab_J_Ve_BF2).
+
+verificaSimboloNavio(x, true):- !.
+verificaSimboloNavio(_, false).
 
 verificaJaDisparadoAoJogador(Tab, X, Y, Tamanho, R):-
 	(X > 0, X < Tamanho, Y > 0, Y < Tamanho) -> (
@@ -580,7 +581,7 @@ posicionaNaviosHorizontal(Tab, X, Y, TamNavio, TamTab, Resultado):-
 adicionandoNavioHorizontal([Head|[]], TamNavio, TamTab, 0, Posicao_Y, Resultado):- 
 	LimiteMin = Posicao_Y,
 	LimiteMax is Posicao_Y + TamNavio - 1, 
-	montaListaComNavio(Head, 0, TamTab, LimiteMin, LimiteMax, [], true, Resultado).% montaListaComNavio(Head, 0, TamTab, LimiteMin, LimiteMax, [], true, Resultado).
+	montaListaComNavio(Head, 0, TamTab, LimiteMin, LimiteMax, [], true, Resultado).
 
 adicionandoNavioHorizontal([H|T], TamNavio, TamTab, 0, Posicao_Y, Resultado):-
 	LimiteMin = Posicao_Y,
@@ -598,7 +599,8 @@ adicionandoNavioHorizontal([H|T], TamNavio, TamTab, Posicao_X, Posicao_Y, Result
 
 montaTabuleiroJogador(Tab, TamTab, TabResul):-
     TamNavios is (TamTab // 2),
-    posicionaNaviosTabJogador(Tab, TamNavios, TamTab, TabResul).
+    posicionaNaviosTabJogador(Tab, TamNavios, TamTab, TabComNaviosResul),
+    jogaBombas(TabComNaviosResul, TamTab // 5, TamTab, TabResul).
 
 
 posicionaNaviosTabJogador(Tab, 2, TamTab, TabResul) :- posicionaNaviosJogador(Tab, 2, TamTab, TabResul).
@@ -773,27 +775,27 @@ iniciaJogoComJogadores(Tab_Jog1, Tab_J_Ve_J2, Tab_Jog2, Tab_J_Ve_J1, TamTab, Dad
         writeln('\nEsse é o tabuleiro que o Jogador 2 vai jogar: \n'),
         preparaTabParaPrint(Tab_J_Ve_J1, 0, TamTab, Tab_B_R),
         write(Tab_B_R),
-        write('Numero de navios restantes do jogador: '), write(NumNavios_J1), write('\n'),
-        write('Numero de navios restantes do bot: '), write(NumNavios_J1), write('\n\n'),
+        write('Numero de navios restantes do jogador 1: '), write(NumNavios_J1), write('\n'),
+        write('Numero de navios restantes do jogador 2: '), write(NumNavios_J2), write('\n\n'),
     
         write('\nVez do jogador 1...\n'),
-        disparaNoTabuleiroBot(Tab_Jog2, Tab_J_Ve_J2, TamTab, Tab_BF, Tab_J_Ve_BF),
+        disparaNoTabuleiroBot(Tab_Jog2, Tab_J_Ve_J2, Tab_Jog1, Tab_J_Ve_J1, TamTab, Tab_BF, Tab_J_Ve_BF, Tab_J1_Final, Tab_B_Ve_J_Final),
 
-        contaNavios(Tab_Jog1, NumNavios_J1_2),
+        contaNavios(Tab_J1_Final, NumNavios_J1_2),
         contaNavios(Tab_BF, NumNavios_J2_2),
         verificaFinalizacaoPartidaComJogadores(NumNavios_J1_2, NumNavios_J2_2, Continue2),
         (Continue2 -> 
             write('\nVez do jogador 2...\n'),
             sleep(0.9),
-            disparaNoTabuleiroBot(Tab_Jog1, Tab_J_Ve_J1, TamTab, Tab_JF, Tab_B_Ve_JF),
-            iniciaJogoComJogadores(Tab_JF, Tab_J_Ve_BF, Tab_BF, Tab_B_Ve_JF, TamTab, Dados, NovosDados); 
+            disparaNoTabuleiroBot(Tab_J1_Final, Tab_B_Ve_J_Final, Tab_BF, Tab_J_Ve_BF, TamTab, Tab_JF, Tab_B_Ve_JF, Tab_BF2, Tab_J_Ve_BF2),
+            iniciaJogoComJogadores(Tab_JF, Tab_J_Ve_BF2, Tab_BF2, Tab_B_Ve_JF, TamTab, Dados, NovosDados); 
             write('Você quer jogar novamente? [1 para sim, outro número para sair]'),
             ler_opcao(Op),
             (Op =:= 1 -> doWhile(true, Dados, TamTab); menu(Dados))
         );
         write('Você quer jogar novamente? [1 para sim, outro número para sair]'),
         ler_opcao(Op),
-        (Op =:= 1 -> doWhile(true, Dados, TamTab); menu(Dados))  % VERIFICAR SE É NECESSARIO A VARIAVEL DADOS E O TRUE
+        (Op =:= 1 -> doWhile(true, Dados, TamTab); menu(Dados))  
     ).    
 
 
@@ -867,6 +869,7 @@ take(N, [H|TailA], [H|TailB]) :-
 % regra que verifica se tem uma parte do navio em uma determinada posição do tabuleiro
 temNavio([], false).
 temNavio(['#'|_], true).
+temNavio(['B'|_], true).
 temNavio([~|T], R):- temNavio(T, R).
 temNavio([x|T], R):- temNavio(T, R).
 temNavio([o|T], R):- temNavio(T, R).
@@ -965,201 +968,90 @@ imprimiListaComEspaco([H|T], StrInicio, R):-
     string_concat(R2, "  ", StrAux),
     imprimiListaComEspaco(T, StrAux, R).
 
+verificaPosicaoValida(Tab, X, Y, TamanhoTab, Result) :-
+  X < TamanhoTab,
+  Y < TamanhoTab,
+  X >= 0,
+  Y >= 0,
+  verificaTemNavio(Tab, X, Y, 1, PosOcupada),
+  (PosOcupada = true -> Result = false ; Result = true), !.
+verificaPosicaoValida(_, _, _, _, false).
 
-% METODOS DAS BOMBAS  (em construcao)
+verificaTemNavio(Tab, X, Y, 1, PosOcupada):-
+    X2 is X - 1,
+    Y2 is Y - 1,
+    nth0(X2, Tab, Linha),
+    drop(Y2, Linha, LinhaDrop),
+    take(1, LinhaDrop, LinhaDropTake),
+    temNavio(LinhaDropTake, PosOcupada).
 
-:- discontiguous jogaBombas/4.
 
 jogaBombas(Tab, 0, _, Tab).
-jogaBombas(Tab, QtdBombas, TamTabuleiro, Tab_Final) :-
-    QtdBombas > 0,
-    TamTabuleiro_1 is TamTabuleiro - 1,
-    random_between(0, TamTabuleiro_1, PosI),
-    random_between(0, TamTabuleiro_1, PosJ),
-    verificaPosicaoValida(Tab, PosI, PosJ),
-    adicionaBomba(Tab, PosI, PosJ, bomba, Tab_Nova),
-    QtdBombas_Nova is QtdBombas - 1,
-    jogaBombas(Tab_Nova, QtdBombas_Nova, TamTabuleiro, Tab_Final).
+jogaBombas(Tab, QtdBombas, TamanhoTab, Result) :-
+    Tamanho is TamanhoTab + 1,
+    random(0, Tamanho, X),
+    random(0, Tamanho, Y),
 
-adicionaBomba([H|T], 0, ValorY, Simbolo, [H_Novo|T]) :-
-    adicionaBombaLinha(H, ValorY, Simbolo, H_Novo).
-adicionaBomba([H|T], ValorX, ValorY, Simbolo, [H|T_Novo]) :-
-    ValorX > 0,
-    ValorX_Novo is ValorX - 1,
-    adicionaBomba(T, ValorX_Novo, ValorY, Simbolo, T_Novo).
-
-adicionaBombaLinha([_|T], 0, Simbolo, [Simbolo|T]).
-adicionaBombaLinha([X|T], ValorY, Simbolo, [X|T_Novo]) :-
-    ValorY > 0,
-    ValorY_Novo is ValorY - 1,
-    adicionaBombaLinha(T, ValorY_Novo, Simbolo, T_Novo).
-
-verificaPosicaoValida(Tab, PosI, PosJ) :-
-    length(Tab, Tam),
-    PosI >= 0,
-    PosI < Tam,
-    nth0(PosI, Tab, Linha),
-    length(Linha, Tam),
-    PosJ >= 0,
-    PosJ < Tam,
-    nth0(PosJ, Linha, Elemento),
-    not(member(Elemento, ['X', '*', bomba, '#', redemoinho])),
-    not(temBombaAdjacente(Tab, PosI, PosJ)).
-
-verificaTemElemento(Tabuleiro, PosI, PosJ) :-
-    nth0(PosI, Tabuleiro, Linha),
-    nth0(PosJ, Linha, Elemento),
-    member(Elemento, ['*', bomba, '#', redemoinho]).
+    verificaPosicaoValida(Tab, X, Y, Tamanho, PosValida),
+    (PosValida 
+        ->  NewQtdBombas is (QtdBombas - 1),
+            adicionaBomba(Tab, X, Y, TamanhoTab, NewTab),
+            jogaBombas(NewTab, NewQtdBombas, TamanhoTab, Result)
+        ; jogaBombas(Tab, QtdBombas, TamanhoTab, Result)).
 
 
-temBombaAdjacente(Tab, PosI, PosJ) :-
-    PosI_Cima is PosI - 1,
-    PosI_Cima >= 0,
-    verificaTemElemento(Tab, PosI_Cima, PosJ).
-temBombaAdjacente(Tab, PosI, PosJ) :-
-    PosJ_Esquerda is PosJ - 1,
-    PosJ_Esquerda >= 0,
-    verificaTemElemento(Tab, PosI, PosJ_Esquerda).
-temBombaAdjacente(Tab, PosI, PosJ) :-
-    length(Tab, Tam),
-    PosI_Baixo is PosI + 1,
-    PosI_Baixo < Tam,
-    verificaTemElemento(Tab, PosI_Baixo, PosJ).
-temBombaAdjacente(Tab, PosI, PosJ) :-
-    length(Tab, Tam),
-    length(Linha, Tam),
-    PosJ_Direita is PosJ + 1,
-    PosJ_Direita < Tam,
-    verificaTemElemento(Tab, PosI, PosJ_Direita).
+adicionaBomba(Tab, X, Y, TamanhoTab, Result) :-
+    adicionaBombaMatriz(Tab, X, Y, 1, TamanhoTab, Result).
 
-jogaBombasBonus(Tab, 0, _, Tab).
-jogaBombasBonus(Tab, QtdBombas, TamTabuleiro, Tab_Final) :-
-    QtdBombas > 0,
-    TamTabuleiro_1 is TamTabuleiro - 1,
-    random_between(0, TamTabuleiro_1, PosI),
-    random_between(0, TamTabuleiro_1, PosJ),
-    verificaPosicaoValida(Tab, PosI, PosJ),
-    adicionaBomba(Tab, PosI, PosJ, redemoinho, Tab_Nova),
-    QtdBombas_Nova is QtdBombas - 1,
-    jogaBombasBonus(Tab_Nova, QtdBombas_Nova, TamTabuleiro, Tab_Final).
-
-jogaBombas(Tab, QtdBombas, TamTabuleiro, Tab_Final) :-
-    jogaBombas(Tab, QtdBombas, TamTabuleiro, Tab_Intermediario),
-    jogaBombasBonus(Tab_Intermediario, QtdBombas, TamTabuleiro, Tab_Final).
+adicionaBombaMatriz(Tab, X, Y, TamNavio, TamTab, Resultado):-
+    X2 is X - 1,
+    Y2 is Y - 1,
+    adicionaBombaLista(Tab, TamNavio, TamTab, X2, Y2, Resultado).
 
 
+adicionaBombaLista([Head|[]], TamNavio, TamTab, 0, Posicao_Y, Resultado):- 
+	LimiteMin = Posicao_Y,
+	LimiteMax is Posicao_Y + TamNavio - 1, 
+	montaListaComBomba(Head, 0, TamTab, LimiteMin, LimiteMax, [], true, Resultado).
 
-% # % Predicado principal que executa o loop do jogo
-% # doWhileJogoCom2(Condition, Dados, TamTabuleiro, NovosDados) :-
+adicionaBombaLista([H|T], TamNavio, TamTab, 0, Posicao_Y, Resultado):-
+	LimiteMin = Posicao_Y,
+	LimiteMax is Posicao_Y + TamNavio - 1, 
+	montaListaComBomba(H, 0, TamTab, LimiteMin, LimiteMax, [], R),                   
+	adicionaBombaLista(T, TamNavio, TamTab, -1, Posicao_Y, R2),
+	append([R], R2, Resultado).
 
+adicionaBombaLista([H|[]], _, _, _, _, [H]). 
 
-% #          %   jogaBombas(NovoTabuleiro_Jogador1, round(TamTabuleiro / 5), TamTabuleiro, Tabuleiro_Jogador1_Final),
-% #          %   jogaBombas(NovoTabuleiro_Jogador2, round(TamTabuleiro / 5), TamTabuleiro, Tabuleiro_Jogador2_Final),
-% #          %   jogaBombasBonus(Tabuleiro_Jogador1_Final, round(TamTabuleiro / 5), TamTabuleiro, Tabuleiro_Jogador1_Final_Final),
-% #          %   jogaBombasBonus(Tabuleiro_Jogador2_Final, round(TamTabuleiro / 5), TamTabuleiro, Tabuleiro_Jogador2_Final_Final),
-            
-% #             iniciaJogoComJogadores(Tabuleiro_Jogador1_Final, Tabuleiro_Jogador1_Ve_Jog2, Tabuleiro_Jogador2_Final, Tabuleiro_Jogador2_Ve_Jog1, TamTabuleiro, Dados).
-% #   ;
-% #     menu(Dados, NovosDados)
-%#   ).
+adicionaBombaLista([H|T], TamNavio, TamTab, Posicao_X, Posicao_Y, Resultado):-
+  Pos_X_Aux is Posicao_X - 1,
+  adicionaBombaLista(T, TamNavio, TamTab, Pos_X_Aux, Posicao_Y, Resul),
+	append([H], Resul, Resultado).
 
+montaListaComBomba(_, TamTab, TamTab, _, _, NovaLista, true, [NovaLista]).
+montaListaComBomba(Lista, I, TamTab, MinI, MaxI, ListaResul, true, R):-
+	I >= 0,
+	I < TamTab,
+	((I < MinI); (I > MaxI)) ->
+		(nth0(I, Lista, Elemento),
+		NovoI is I + 1,
+		append(ListaResul, [Elemento], NovoLSaida),
+		montaListaComBomba(Lista, NovoI, TamTab, MinI, MaxI, NovoLSaida, true, R));
+		(Elemento = 'B',
+		NovoI is I + 1,
+		append(ListaResul, [Elemento], NovoLSaida),
+		montaListaComBomba(Lista, NovoI, TamTab, MinI, MaxI, NovoLSaida, true, R)).
 
-
-
-
-
-
-%# % Predicado para jogar bombas aleatoriamente no tabuleiro
-% # #jogaBombas(Tab, 0, _, Tab).
-% # jogaBombas(Tab, QtdBombas, TamTabuleiro, TabFinal) :-
-% #   random(0, TamTabuleiro, PosI),
-% #   random(0, TamTabuleiro, PosJ),
-% #   (
-% #     verificaPosicaoValida(Tab, PosI, PosJ) ->
-% #       adicionaBomba(Tab, PosI, PosJ, 'X', TabFinalTemp),
-% #       QtdBombasRestantes is QtdBombas - 1,
-% #       jogaBombas(TabFinalTemp, QtdBombasRestantes, TamTabuleiro, TabFinal)
-% #     ;
-% #       jogaBombas(Tab, QtdBombas, TamTabuleiro, TabFinal)
-% #   ).
-
-% # % Predicado para adicionar uma bomba no tabuleiro
-% # adicionaBomba([], _, _, _, []).
-% # adicionaBomba([H|T], ValorX, ValorY, Simbolo, [HFinal|TFinal]) :-
-% #   (
-% #     ValorX = 0 ->
-% #       string_chars(H, HChars),
-% #       replace_element_at_index(HChars, ValorY, Simbolo, HFinalChars),
-% #       string_chars(HFinal, HFinalChars)
-%#     ;
-%#       HFinal = H
-%#   ),
-%#   ValorXTemp is ValorX - 1,
-%#   adicionaBomba(T, ValorXTemp, ValorY, Simbolo, TFinal).
-
-%# % Predicado para verificar se há uma bomba adjacente a uma posição
-%# temBombaAdjacente(Tab, PosI, PosJ) :-
-%#   (
-%#     PosITemp is PosI - 1,
-%#     PosITemp >= 0,
-%#     verificaTemElemento(Tab, PosITemp, PosJ)
-%#   ) ;
-%#   (
-%#     PosJTemp is PosJ - 1,
-%#     PosJTemp >= 0,
-%#     verificaTemElemento(Tab, PosI, PosJTemp)
-%#   ) ;
-%#   (
-%%#     verificaTemElemento(Tab, PosI, PosJ)
-%#   ) ;
-%#   (
-%#     PosJ < length(H),
-%#     verificaTemElemento(Tab, PosI, PosJ)
-%#   ).
-
-%# % Predicado para jogar bombas bônus no tabuleiro
-%# jogaBombasBonus(Tab, 0, _, Tab).
-%# jogaBombasBonus(Tab, QtdBombas, TamTabuleiro, TabFinal) :-
-%#   random(0, TamTabuleiro, PosI),
-%#   random(0, TamTabuleiro, PosJ),
-%#   writeln(PosI),
-%#   writeln(PosJ),
-%#   (
-%#     verificaPosicaoValida(Tab, PosI, PosJ) ->
-%#       adicionaBomba(Tab, PosI, PosJ, 'B', TabFinalTemp),
-%#       QtdBombasRestantes is QtdBombas - 1,
-%#       jogaBombasBonus(TabFinalTemp, QtdBombasRestantes, TamTabuleiro, TabFinal)
-%#     ;
-%#       jogaBombasBonus(Tab, QtdBombas, TamTabuleiro, TabFinal)
-%#   ).
-
-
-%# iniciaJogoComJogadores (Tab_Jog1, Tab_J_Ve_J2, Tab_Jog2, Tab_J_Ve_J1, TamTab, Dados) :-
-%#   contaNavios(Tab_Jog1, NumNavios_J1),
-%# 	contaNavios(Tab_Jog2, NumNavios_J2),
-
-%# 	verificaFinalizacaoPartida(NumNavios_J1, NumNavios_J2, Continue),
-
-%#     (Continue -> 
-%#         shell(clear),
-%#         writeln('Esse é o tabuleiro que o Jogador 1 vai jogar: \n'), % Mudar Frase
-%#         preparaTabParaPrint(Tab_J_Ve_J2, 0, TamTab, Tab_J_R),
-% #         write(Tab_J_R),
-% #         writeln('\nEsse é o tabuleiro que o Jogador 2 vai jogar: \n'),
-% #         preparaTabParaPrint(Tab_J_Ve_J1, 0, TamTab, Tab_B_R),
-% #         write(Tab_B_R),
-% #         write('Numero de navios restantes do jogador: '), write(NumNavios_J1), write('\n'),
-% # 	      write('Numero de navios restantes do bot: '), write(NumNavios_J1), write('\n\n'),
-
-%#         write('\nVez do jogador 1...\n'),
-%#         disparaNoTabuleiroBot(Tab_Jog2, Tab_J_Ve_J2, TamTab, Tab_BF, Tab_J_Ve_BF),
-%#         write('\nVez do bot...\n'),
-%# 		    sleep(0.9),
-%#         disparaNoTabuleiroBot(Tab_Jog1, Tab_J_Ve_J1, TamTab, Tab_JF, Tab_B_Ve_JF),
-
-%#         iniciaJogoComJogadores(Tab_JF, Tab_J_Ve_BF, Tab_BF, Tab_B_Ve_JF, TamTab, Dados); 
-        
-%#         write('Você quer jogar novamente? [1 para sim, outro número para sair]'),
-%#         ler_opcao(Op),
-%#         (Op =:= 1 -> doWhile(true, Dados, TamTab); menu(Dados))  % VERIFICAR SE É NECESSARIO A VARIAVEL DADOS E O TRUE
-%#         ).
+montaListaComBomba(_, TamTab, TamTab, _, _, NovaLista, NovaLista).
+montaListaComBomba(Lista, I, TamTab, MinI, MaxI, ListaResul, R):-
+	I >= 0,
+	I < TamTab,
+	((I < MinI); (I > MaxI)) ->
+		(nth0(I, Lista, Elemento),
+		NovoI is I + 1,
+		append(ListaResul, [Elemento], NovoLSaida),
+		montaListaComBomba(Lista, NovoI, TamTab, MinI, MaxI, NovoLSaida, R));
+		(Elemento = 'B',
+		NovoI is I + 1,
+		append(ListaResul, [Elemento], NovoLSaida),
+		montaListaComBomba(Lista, NovoI, TamTab, MinI, MaxI, NovoLSaida, R)).
